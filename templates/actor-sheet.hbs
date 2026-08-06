@@ -1,0 +1,106 @@
+<section class="tiny-supers actor-sheet">
+
+  <header class="sheet-header">
+    <h1>
+      <input name="name"
+             type="text"
+             value="{{actor.name}}"
+             placeholder="Hero Name"/>
+    </h1>
+  </header>
+
+  <section class="sheet-body">
+
+    <fieldset>
+      <legend>Identity</legend>
+
+      <label>Real Name</label>
+      <input name="system.civilianIdentity"
+             type="text"
+             value="{{system.civilianIdentity}}"/>
+
+      <label>Appearance</label>
+      <input name="system.appearance"
+             type="text"
+             value="{{system.appearance}}"/>
+
+      <label>Archetype</label>
+      <input name="system.archetype"
+             type="text"
+             value="{{system.archetype}}"/>
+
+      <label>Power Origin</label>
+      <input name="system.powerOrigin"
+             type="text"
+             value="{{system.powerOrigin}}"/>
+
+    </fieldset>
+
+
+    <fieldset>
+      <legend>Traits</legend>
+
+      <label>Trait 1</label>
+      <input name="system.trait1"
+             type="text"
+             value="{{system.trait1}}"/>
+
+      <label>Trait 2</label>
+      <input name="system.trait2"
+             type="text"
+             value="{{system.trait2}}"/>
+
+      <label>Trait 3</label>
+      <input name="system.trait3"
+             type="text"
+             value="{{system.trait3}}"/>
+
+    </fieldset>
+
+
+    <fieldset>
+      <legend>Hero Details</legend>
+
+      <label>Power Level</label>
+      <input name="system.powerLevel"
+             type="text"
+             value="{{system.powerLevel}}"/>
+
+      <label>Stress</label>
+      <input name="system.stress"
+             type="text"
+             value="{{system.stress}}"/>
+
+    </fieldset>
+
+
+    <fieldset>
+      <legend>Personality</legend>
+
+      <label>Beliefs</label>
+      <textarea name="system.beliefs">{{system.beliefs}}</textarea>
+
+      <label>Weakness</label>
+      <textarea name="system.weakness">{{system.weakness}}</textarea>
+
+    </fieldset>
+
+
+    <fieldset>
+      <legend>Weapons</legend>
+
+      <label>Mastered Weapons</label>
+      <textarea name="system.masteredWeapons">{{system.masteredWeapons}}</textarea>
+
+      <label>Proficient Weapons</label>
+      <textarea name="system.proficientWeapons">{{system.proficientWeapons}}</textarea>
+
+    </fieldset>
+
+  </section>
+  <footer class="sheet-footer">
+    <button type="submit">
+        Save
+    </button>
+  </footer>
+</section>

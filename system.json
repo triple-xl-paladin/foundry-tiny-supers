@@ -1,0 +1,33 @@
+{
+  "id": "tiny-supers",
+  "title": "Tiny Supers (Unofficial)",
+  "description": "Tiny Supers system module for Foundry VTT to facilitate playing Tiny Supers games.",
+  "authors": [
+    {
+      "id":"3xl-paladin",
+      "name":"3xl-paladin"
+    }
+  ],
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": 14,
+    "verified": 14
+  },
+  "esmodules": [
+    "tiny-supers.mjs",
+    "tiny-supers-dice-roller.mjs"
+  ],
+  "initiative": "2d6",
+  "documentTypes": {
+   "Actor": {
+        "hero":{}
+    },
+    "Item": {
+        "weapon":{},
+        "armor":{},
+        "gear":{},
+        "heritage":{},
+        "trait":{}
+    }
+  }
+}
