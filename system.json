@@ -23,10 +23,7 @@
         "hero":{}
     },
     "Item": {
-        "weapon":{},
-        "armor":{},
-        "gear":{},
-        "heritage":{},
+        "archetype":{},
         "trait":{}
     }
   }

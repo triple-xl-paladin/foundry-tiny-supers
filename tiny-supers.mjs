@@ -4,8 +4,11 @@
 import { SuperHeroSheet } from './module/actor-sheet.mjs';
 import { SuperHero } from './module/actor.mjs';
 import { TinySupersDiceRoller } from './tiny-supers-dice-roller.mjs'
+import { ItemArchetypeSheet } from './module/item-archetype-sheet.mjs';
+import { Archetypes } from './module/item-archetype-model.mjs';
 
 const { Actors } = foundry.documents.collections;
+const { Items } = foundry.documents.collections;
 
 // 2. Register your system's components during the 'init' hook
 Hooks.once('init', () => {
@@ -13,6 +16,7 @@ Hooks.once('init', () => {
 
   // Register the custom Actor class
   CONFIG.Actor.dataModels.hero = SuperHero;
+  CONFIG.Item.dataModels.Archetypes = Archetypes;
   
   // You can also register other things here, like:
   // - CONFIG.Item.documentClass
@@ -26,6 +30,12 @@ Hooks.once('init', () => {
     types: ["hero"],
     makeDefault: true  // Use this sheet for all actors in your system
   });
+
+  Items.unregisterSheet("core",foundry.applications.sheets.ItemSheetV2);
+  Items.registerSheet("tiny-supers", ItemArchetypeSheet, {
+    types: ["archetype"],
+    makeDefault: false
+  })
 
 });
 

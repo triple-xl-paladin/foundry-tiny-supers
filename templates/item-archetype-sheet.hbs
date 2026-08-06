@@ -1,0 +1,38 @@
+<section class="tiny-supers item-archetype-sheet">
+
+  <header class="sheet-header">
+    <h1>
+      <input name="name"
+             type="text"
+             value="{{item.name}}"
+             placeholder="Archetype"/>
+    </h1>
+  </header>
+
+  <section class="sheet-body">
+
+    <fieldset>
+      <label>Description</label>
+      <input name="system.archetype_desc"
+             type="text"
+             value="{{system.archetype_desc}}"/>
+
+      <label>Stress</label>
+      <input name="system.stress"
+             type="text"
+             value="{{system.stress}}"/>
+
+      <label>Archetype Trait</label>
+      <input name="system.archetype_trait"
+             type="text"
+             value="{{system.archetype_trait}}"/>
+
+    </fieldset>
+
+  </section>
+  <footer class="sheet-footer">
+    <button type="submit">
+        Save
+    </button>
+  </footer>
+</section>
