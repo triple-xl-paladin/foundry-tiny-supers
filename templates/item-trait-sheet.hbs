@@ -1,0 +1,33 @@
+<section class="tiny-supers item-trait-sheet">
+
+  <header class="sheet-header">
+    <h1>
+      <input name="name"
+             type="text"
+             value="{{item.name}}"
+             placeholder="trait"/>
+    </h1>
+  </header>
+
+  <section class="sheet-body">
+
+    <fieldset>
+      <label>Description</label>
+      <input name="system.trait_desc"
+             type="text"
+             value="{{system.trait_desc}}"/>
+
+      <label>trait Trait</label>
+      <input name="system.trait_group"
+             type="text"
+             value="{{system.trait_group}}"/>
+
+    </fieldset>
+
+  </section>
+  <footer class="sheet-footer">
+    <button type="submit">
+        Save
+    </button>
+  </footer>
+</section>

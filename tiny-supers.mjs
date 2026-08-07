@@ -2,10 +2,14 @@
 
 // 1. Import your custom classes
 import { SuperHeroSheet } from './module/actor-sheet.mjs';
-import { SuperHero } from './module/actor.mjs';
-import { TinySupersDiceRoller } from './tiny-supers-dice-roller.mjs'
+import { SuperHero } from './module/models/actor.mjs';
+import { Archetypes } from './module/models/item-archetype-model.mjs';
+import { Traits } from './module/models/item-trait-model.mjs';
+
+import { TinySupersDiceRoller } from './module/tiny-supers-dice-roller.mjs'
 import { ItemArchetypeSheet } from './module/item-archetype-sheet.mjs';
-import { Archetypes } from './module/item-archetype-model.mjs';
+import { ItemTraitSheet } from './module/item-trait-sheet.mjs';
+
 
 const { Actors } = foundry.documents.collections;
 const { Items } = foundry.documents.collections;
@@ -16,7 +20,8 @@ Hooks.once('init', () => {
 
   // Register the custom Actor class
   CONFIG.Actor.dataModels.hero = SuperHero;
-  CONFIG.Item.dataModels.Archetypes = Archetypes;
+  CONFIG.Item.dataModels.archetypes = Archetypes;
+  CONFIG.Item.dataModels.trait = Traits;
   
   // You can also register other things here, like:
   // - CONFIG.Item.documentClass
@@ -31,11 +36,16 @@ Hooks.once('init', () => {
     makeDefault: true  // Use this sheet for all actors in your system
   });
 
-  Items.unregisterSheet("core",foundry.applications.sheets.ItemSheetV2);
+  //Items.unregisterSheet("core",foundry.applications.sheets.ItemSheetV2);
   Items.registerSheet("tiny-supers", ItemArchetypeSheet, {
     types: ["archetype"],
-    makeDefault: false
-  })
+    makeDefault: true
+  });
+
+  Items.registerSheet("tiny-supers", ItemTraitSheet, {
+    types: ["trait"],
+    makeDefault: true
+  });
 
 });
 

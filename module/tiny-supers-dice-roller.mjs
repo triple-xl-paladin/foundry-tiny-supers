@@ -1,4 +1,4 @@
-import { rollTinySupers } from "./module/dice.mjs";
+import { rollTinySupers } from "./models/dice.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
