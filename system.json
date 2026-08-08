@@ -15,7 +15,7 @@
   },
   "esmodules": [
     "tiny-supers.mjs",
-    "tiny-supers-dice-roller.mjs"
+    "module/tiny-supers-dice-roller.mjs"
   ],
   "initiative": "2d6",
   "documentTypes": {

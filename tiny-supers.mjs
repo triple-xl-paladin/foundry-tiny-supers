@@ -9,6 +9,7 @@ import { Traits } from './module/models/item-trait-model.mjs';
 import { TinySupersDiceRoller } from './module/tiny-supers-dice-roller.mjs'
 import { ItemArchetypeSheet } from './module/item-archetype-sheet.mjs';
 import { ItemTraitSheet } from './module/item-trait-sheet.mjs';
+import { TinySupersImportApplication } from './module/import-applicaiton.mjs';
 
 
 const { Actors } = foundry.documents.collections;
@@ -45,6 +46,15 @@ Hooks.once('init', () => {
   Items.registerSheet("tiny-supers", ItemTraitSheet, {
     types: ["trait"],
     makeDefault: true
+  });
+
+  game.settings.registerMenu("tiny-supers", "importMenu", {
+      name: "Import Content",
+      label: "Import JSON",
+      hint: "Import actors and items from a JSON file.",
+      icon: "fas fa-file-import",
+      type: TinySupersImportApplication,
+      restricted: true
   });
 
 });

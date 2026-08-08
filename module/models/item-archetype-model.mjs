@@ -9,6 +9,7 @@ export class Archetypes extends foundry.abstract.TypeDataModel {
       archetype_desc: new StringField(),
       stress: new NumberField(),
       archetype_trait: new StringField(),
+      source: new StringField(),
     };
   }
 }
