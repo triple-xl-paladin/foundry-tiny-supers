@@ -2,7 +2,7 @@ const {
   HTMLField, SchemaField, NumberField, StringField, FilePathField, ArrayField
 } = foundry.data.fields;
 
-export class Traits extends foundry.abstract.TypeDataModel {
+export class Trait extends foundry.abstract.TypeDataModel {
   static defineSchema() {
     return {
       trait: new StringField(),

@@ -36,27 +36,24 @@
 
     </fieldset>
 
-
     <fieldset>
       <legend>Traits</legend>
 
-      <label>Trait 1</label>
-      <input name="system.trait1"
-             type="text"
-             value="{{system.trait1}}"/>
-
-      <label>Trait 2</label>
-      <input name="system.trait2"
-             type="text"
-             value="{{system.trait2}}"/>
-
-      <label>Trait 3</label>
-      <input name="system.trait3"
-             type="text"
-             value="{{system.trait3}}"/>
+      {{#each traits}}
+        <div class="trait" data-item-id="{{id}}">
+          <label>{{name}}</label>
+          <p>{{system.trait_desc}}</p>
+          <button type="button"
+              class="delete-trait"
+              data-action="deleteTrait"
+              data-item-id="{{id}}"
+              title="Delete trait">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+        </div>
+      {{/each}}
 
     </fieldset>
-
 
     <fieldset>
       <legend>Hero Details</legend>

@@ -3,8 +3,8 @@
 // 1. Import your custom classes
 import { SuperHeroSheet } from './module/actor-sheet.mjs';
 import { SuperHero } from './module/models/actor.mjs';
-import { Archetypes } from './module/models/item-archetype-model.mjs';
-import { Traits } from './module/models/item-trait-model.mjs';
+import { Archetype } from './module/models/item-archetype-model.mjs';
+import { Trait } from './module/models/item-trait-model.mjs';
 
 import { TinySupersDiceRoller } from './module/tiny-supers-dice-roller.mjs'
 import { ItemArchetypeSheet } from './module/item-archetype-sheet.mjs';
@@ -21,8 +21,8 @@ Hooks.once('init', () => {
 
   // Register the custom Actor class
   CONFIG.Actor.dataModels.hero = SuperHero;
-  CONFIG.Item.dataModels.archetypes = Archetypes;
-  CONFIG.Item.dataModels.trait = Traits;
+  CONFIG.Item.dataModels.archetype = Archetype;
+  CONFIG.Item.dataModels.traits = Trait;
   
   // You can also register other things here, like:
   // - CONFIG.Item.documentClass
