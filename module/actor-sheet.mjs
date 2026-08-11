@@ -13,7 +13,8 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
       height: 1024
     },
     actions: {
-      deleteTrait: SuperHeroSheet.#deleteTrait
+      deleteTrait: SuperHeroSheet.#deleteTrait,
+      deleteArchetype: SuperHeroSheet.#deleteArchetype
     },
     form: {
       handler: SuperHeroSheet.#onSubmit,
@@ -37,6 +38,15 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
     await item.delete();
   }
 
+  static async #deleteArchetype(event, target) {
+    const itemId = target.dataset.itemId;
+    const item = this.actor.items.get(itemId);
+
+    if (!item) return;
+
+    await item.delete();
+  }
+
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
 
@@ -52,6 +62,12 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
       item => item.type === "trait"
     ) ?? [];
 
+    context.archetype = this.actor.items?.contents?.find(
+      item => item.type === "archetype"
+    ) ?? null;
+
+    context.maxStress = context.archetype?.system.stress ?? 0;
+    
     console.log("ACTOR:", this.actor);
     console.log("ITEMS:", this.actor.items);
     console.log("TRAITS:", context.traits);
@@ -66,5 +82,39 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
     console.log(formData.object);
     await this.actor.update(formData.object);
     //await form.object.update(formData.object);
+  }
+
+  async _onDropItem(event, item) {
+
+    console.log("DROPPED ITEM:", item.name, item.type);
+
+    // Only allow one archetype
+    if (item.type === "archetype") {
+
+        const existingArchetype = this.actor.items.find(
+            existing => existing.type === "archetype"
+        );
+
+        if (existingArchetype) {
+            ui.notifications.warn("This hero already has an archetype.");
+            return;
+        }
+    }
+
+    // Only allow three traits
+    if (item.type === "trait") {
+
+        const traitCount = this.actor.items.filter(
+            existing => existing.type === "trait"
+        ).length;
+
+        if (traitCount >= 3) {
+            ui.notifications.warn("This hero already has three traits.");
+            return;
+        }
+    }
+
+    // Everything is valid, so let Foundry handle the normal drop.
+    return super._onDropItem(event, item);
   }
 }

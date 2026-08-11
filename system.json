@@ -17,6 +17,9 @@
     "tiny-supers.mjs",
     "module/tiny-supers-dice-roller.mjs"
   ],
+  "styles": [
+    "styles/tiny-supers.css"
+  ],
   "initiative": "2d6",
   "documentTypes": {
    "Actor": {

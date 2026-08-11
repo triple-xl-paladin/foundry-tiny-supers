@@ -24,16 +24,33 @@
              type="text"
              value="{{system.appearance}}"/>
 
-      <label>Archetype</label>
-      <input name="system.archetype"
-             type="text"
-             value="{{system.archetype}}"/>
-
       <label>Power Origin</label>
       <input name="system.powerOrigin"
              type="text"
              value="{{system.powerOrigin}}"/>
 
+    </fieldset>
+
+    <fieldset>
+      <legend>Archetype</legend>
+
+      {{#if archetype}}
+        <div class="archetype" data-item-id="{{archetype.id}}">
+          <label>{{archetype.name}}</label>
+          <p>{{archetype.system.archetype_desc}}</p>
+          <p>{{archetype.system.archetype_trait}}</p>
+          <p>{{archetype.system.source}}</p>
+
+          <button type="button"
+                  data-action="deleteArchetype"
+                  data-item-id="{{archetype.id}}"
+                  title="Delete archetype">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      {{else}}
+        <p>No archetype selected.</p>
+      {{/if}}
     </fieldset>
 
     <fieldset>
@@ -65,8 +82,14 @@
 
       <label>Stress</label>
       <input name="system.stress"
-             type="text"
+             type="number"
+             min="0"
+             max="{{maxStress}}"
              value="{{system.stress}}"/>
+
+  <span>/ {{maxStress}}</span>
+
+
 
     </fieldset>
 

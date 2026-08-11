@@ -9,9 +9,8 @@ export class SuperHero extends foundry.abstract.TypeDataModel {
       appearance: new StringField(),
       beliefs: new StringField(),
       weakness: new StringField(),
-      archetype: new StringField(),
       powerOrigin: new StringField(),
-      stress: new StringField(),
+      stress: new NumberField({ initial: 0 }),
       masteredWeapons: new StringField(),
       proficientWeapons: new StringField(),
       powerLevel: new StringField()
