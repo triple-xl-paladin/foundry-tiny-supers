@@ -35,6 +35,17 @@ const{api, sheets} = foundry.applications;
 export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorSheetV2) {
 
   /*
+   * The sheet starts in locked mode.
+   *
+   * This is deliberately a property of the sheet/application rather
+   * than the Actor document. We don't want "locked" to be stored on
+   * the character itself.
+   *
+   * Each time the sheet is opened, it starts locked.
+   */
+  _editing = false;
+
+  /*
    * DEFAULT_OPTIONS
    * ---------------
    *
@@ -82,7 +93,8 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
      */
     actions: {
       deleteTrait: SuperHeroSheet.#deleteTrait,
-      deleteArchetype: SuperHeroSheet.#deleteArchetype
+      deleteArchetype: SuperHeroSheet.#deleteArchetype,
+      toggleEdit: SuperHeroSheet.#toggleEdit
     },
 
     /*
@@ -178,6 +190,79 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
   }
 
   /*
+   * Toggle edit mode
+   * ----------------
+   *
+   * The sheet starts locked so that character information cannot be
+   * accidentally changed during play.
+   *
+   * Clicking the lock button toggles between:
+   *
+   *     false = locked
+   *     true  = editable
+   *
+   * We re-render the sheet so that the template can update its controls.
+   */
+  static #toggleEdit(event, target) {
+    this._editing = !this._editing;
+
+    this.render();
+  }
+  /*
+   * _getFrameButtons()
+   * ------------------
+   *
+   * Add buttons directly to the application window frame.
+   *
+   * This is different from _getHeaderControls(), which adds controls
+   * to Foundry's "..." controls menu.
+   *
+   * The returned buttons are rendered directly in the window header.
+   */
+  _getFrameButtons(options) {
+    const buttons = super._getFrameButtons(options);
+
+    buttons.unshift({
+      action: "toggleEdit",
+      icon: this._editing
+        ? "fa-solid fa-unlock"
+        : "fa-solid fa-lock",
+      label: this._editing
+        ? "Lock Editing"
+        : "Unlock Editing"
+    });
+
+    return buttons;
+  }
+
+
+  /*
+   * _getHeaderControls()
+   * --------------------
+   *
+   * Adds our lock/unlock button to the Foundry application window header.
+   *
+   * This is different from a button in the Handlebars template.
+   * These controls appear in the application's title bar alongside
+   * Foundry's other window controls.
+   */
+  _getHeaderControls() {
+    const controls = super._getHeaderControls();
+
+    controls.unshift({
+      action: "toggleEdit",
+      icon: this._editing
+        ? "fa-solid fa-unlock"
+        : "fa-solid fa-lock",
+      label: this._editing
+        ? "Lock Editing"
+        : "Unlock Editing"
+    });
+
+    return controls;
+  }
+
+  /*
    * _prepareContext()
    * -----------------
    *
@@ -235,6 +320,7 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
     context.actor = this.actor;
     context.system = this.actor.system;
     context.editable = this.isEditable;
+    context.editing = this._editing;
 
     /*
      * Traits are now Item documents embedded in the Actor.

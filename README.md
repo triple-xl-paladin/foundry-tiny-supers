@@ -46,6 +46,9 @@ This project uses modern Foundry VTT development practices, including:
 - Modern document and application APIs
 - Handlebars templates for UI rendering
 
+## AI Assistance
+This project was developed with extensive assistance from AI tools, which were used for code generation, debugging, documentation, explanation, and learning. All generated code was reviewed, tested, modified, and integrated by the project author.
+
 ### Requirements
 
 - Foundry VTT

@@ -5,7 +5,8 @@
       <input name="name"
              type="text"
              value="{{actor.name}}"
-             placeholder="Hero Name"/>
+             placeholder="Hero Name"
+             {{#unless editing}}disabled{{/unless}}/>
     </h1>
   </header>
 
@@ -17,18 +18,40 @@
       <label>Real Name</label>
       <input name="system.civilianIdentity"
              type="text"
-             value="{{system.civilianIdentity}}"/>
+             value="{{system.civilianIdentity}}"
+             {{#unless editing}}disabled{{/unless}}/>
 
       <label>Appearance</label>
       <input name="system.appearance"
              type="text"
-             value="{{system.appearance}}"/>
+             value="{{system.appearance}}"
+             {{#unless editing}}disabled{{/unless}}/>
 
       <label>Power Origin</label>
       <input name="system.powerOrigin"
              type="text"
-             value="{{system.powerOrigin}}"/>
+             value="{{system.powerOrigin}}"
+             {{#unless editing}}disabled{{/unless}}/>
+    </fieldset>
 
+    <fieldset>
+      <legend>Hero Details</legend>
+
+      <label>Power Level</label>
+      <input name="system.powerLevel"
+             type="text"
+             value="{{system.powerLevel}}"
+             {{#unless editing}}disabled{{/unless}}/>
+
+      <label>Stress</label>
+      <input name="system.stress"
+             type="number"
+             min="0"
+             max="{{maxStress}}"
+             value="{{system.stress}}"
+             {{#unless editing}}disabled{{/unless}}/>
+
+      <span>/ {{maxStress}}</span>
     </fieldset>
 
     <fieldset>
@@ -41,12 +64,14 @@
           <p>{{archetype.system.archetype_trait}}</p>
           <p>Source: {{archetype.system.source}}</p>
 
+          {{#if editing}}
           <button type="button"
                   data-action="deleteArchetype"
                   data-item-id="{{archetype.id}}"
                   title="Delete archetype">
             <i class="fa-solid fa-trash"></i>
           </button>
+          {{/if}}
         </div>
       {{else}}
         <p>No archetype selected.</p>
@@ -60,48 +85,28 @@
         <div class="trait" data-item-id="{{id}}">
           <label>{{name}}</label>
           <p>{{system.trait_desc}}</p>
-          <button type="button"
-              class="delete-trait"
-              data-action="deleteTrait"
-              data-item-id="{{id}}"
-              title="Delete trait">
-            <i class="fa-solid fa-trash"></i>
-        </button>
+          {{#if editing}}
+            <button type="button"
+                class="delete-trait"
+                data-action="deleteTrait"
+                data-item-id="{{id}}"
+                title="Delete trait">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          {{/if}}
         </div>
       {{/each}}
 
     </fieldset>
 
     <fieldset>
-      <legend>Hero Details</legend>
-
-      <label>Power Level</label>
-      <input name="system.powerLevel"
-             type="text"
-             value="{{system.powerLevel}}"/>
-
-      <label>Stress</label>
-      <input name="system.stress"
-             type="number"
-             min="0"
-             max="{{maxStress}}"
-             value="{{system.stress}}"/>
-
-  <span>/ {{maxStress}}</span>
-
-
-
-    </fieldset>
-
-
-    <fieldset>
       <legend>Personality</legend>
 
       <label>Beliefs</label>
-      <textarea name="system.beliefs">{{system.beliefs}}</textarea>
+      <textarea name="system.beliefs"{{#unless editing}}disabled{{/unless}}>{{system.beliefs}}</textarea>
 
       <label>Weakness</label>
-      <textarea name="system.weakness">{{system.weakness}}</textarea>
+      <textarea name="system.weakness"{{#unless editing}}disabled{{/unless}}>{{system.weakness}}</textarea>
 
     </fieldset>
 
@@ -110,10 +115,10 @@
       <legend>Weapons</legend>
 
       <label>Mastered Weapons</label>
-      <textarea name="system.masteredWeapons">{{system.masteredWeapons}}</textarea>
+      <textarea name="system.masteredWeapons"{{#unless editing}}disabled{{/unless}}>{{system.masteredWeapons}}</textarea>
 
       <label>Proficient Weapons</label>
-      <textarea name="system.proficientWeapons">{{system.proficientWeapons}}</textarea>
+      <textarea name="system.proficientWeapons"{{#unless editing}}disabled{{/unless}}>{{system.proficientWeapons}}</textarea>
 
     </fieldset>
 
