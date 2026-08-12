@@ -6,6 +6,7 @@
 
 # Editor settings
 .vscode/
+.idea/
 
 # OS files
 .DS_Store
@@ -15,3 +16,6 @@ Thumbs.db
 *.tmp
 *.bak
 *.log
+
+# Other junk
+package.json
