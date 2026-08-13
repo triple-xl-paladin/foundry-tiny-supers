@@ -1,35 +1,262 @@
-// dice.mjs
+// models/dice.mjs
+//
+// This file contains the actual Tiny Supers dice-rolling RULES.
+//
+// IMPORTANT DESIGN DECISION:
+//
+// The dice roller Application does NOT contain these rules.
+//
+// The Application only says:
+//
+//     "The player clicked the Advantage button."
+//
+// This module decides:
+//
+//     "Advantage means 3d6."
+//
+// This separation means the game mechanics can be used by other parts of the
+// system without needing the dice roller window.
+//
+// For example, eventually an Actor sheet, macro, chat command or another
+// application could call:
+//
+//     rollTinySupers("normal", actor);
+//
+// without needing to know how the roll is implemented.
 
+
+// -----------------------------------------------------------------------------
+// ROLL TINY SUPERS DICE
+// -----------------------------------------------------------------------------
+//
+// This is an exported function rather than a class.
+//
+// We don't need to maintain state between rolls, so a simple function is
+// appropriate.
+//
+// "type" determines which kind of Tiny Supers roll is being made.
+//
+// "actor" is optional. If supplied, the resulting ChatMessage is associated
+// with that Actor.
+//
+// The defaults are important:
+//
+//     type = "normal"
+//         If the caller doesn't specify a roll type, perform a normal roll.
+//
+//     actor = null
+//         If no Actor is supplied, the roll is made without associating it
+//         with a particular Actor.
 export async function rollTinySupers(type = "normal", actor = null) {
-
+  // ---------------------------------------------------------------------------
+  // DETERMINE THE DICE FORMULA
+  // ---------------------------------------------------------------------------
+  //
+  // Foundry's Roll class accepts formulas such as:
+  //
+  //     "2d6"
+  //     "3d6"
+  //     "1d6"
+  //
+  // We first determine the appropriate formula based on the Tiny Supers
+  // roll type.
+  //
+  // Keeping this decision in one place means the rest of the function doesn't
+  // need to care about the difference between normal, advantage and
+  // disadvantage rolls.
   let formula;
 
+  // switch is useful here because there are several possible roll types.
+  //
+  // This translates the Tiny Supers rule into Foundry's dice notation.
   switch (type) {
+    // -------------------------------------------------------------------------
+    // ADVANTAGE
+    // -------------------------------------------------------------------------
+    //
+    // Advantage = 3d6.
     case "advantage":
       formula = "3d6";
       break;
 
+    // -------------------------------------------------------------------------
+    // DISADVANTAGE
+    // -------------------------------------------------------------------------
+    //
+    // Disadvantage = 1d6.
     case "disadvantage":
       formula = "1d6";
       break;
 
+    // -------------------------------------------------------------------------
+    // NORMAL
+    // -------------------------------------------------------------------------
+    //
+    // Anything not explicitly recognised above currently becomes a normal
+    // Tiny Supers roll.
+    //
+    // This also handles the default case when type is "normal".
     default:
       formula = "2d6";
   }
 
+  // ---------------------------------------------------------------------------
+  // CREATE THE FOUNDRY ROLL
+  // ---------------------------------------------------------------------------
+  //
+  // Roll is a Foundry-provided class.
+  //
+  // At this point we are creating a Roll object from the formula, but the
+  // dice haven't necessarily been evaluated yet.
+  //
+  // For example:
+  //
+  //     new Roll("2d6")
+  //
+  // represents the roll that we are about to perform.
   const roll = new Roll(formula);
+
+  // ---------------------------------------------------------------------------
+  // EVALUATE THE ROLL
+  // ---------------------------------------------------------------------------
+  //
+  // evaluate() actually performs the roll.
+  //
+  // It is asynchronous, hence:
+  //
+  //     await roll.evaluate()
+  //
+  // After this completes, the Roll object contains the actual dice results.
   await roll.evaluate();
 
+  // ---------------------------------------------------------------------------
+  // COUNT SUCCESSFUL DICE
+  // ---------------------------------------------------------------------------
+  //
+  // Tiny Supers determines success on individual dice.
+  //
+  // A die result of 5 or 6 is a success.
+  //
+  // Foundry stores the individual dice results inside the Roll object.
+  //
+  // roll.dice[0]
+  //     = the first dice term in the formula.
+  //
+  // For our current formulas there is only one dice term:
+  //
+  //     2d6
+  //     3d6
+  //     1d6
+  //
+  // .results contains the individual dice results.
+  //
+  // We use filter() to keep only dice whose result is >= 5.
+  //
+  // For example:
+  //
+  //     [2, 5, 6]
+  //
+  // becomes:
+  //
+  //     [5, 6]
+  //
+  // .length then tells us how many successes there were:
+  //
+  //     2
+  //
+  // IMPORTANT JAVASCRIPT LESSON:
+  //
+  // filter() doesn't change the original array. It creates a new array
+  // containing only the elements that passed the test.
   const successes = roll.dice[0].results
     .filter(die => die.result >= 5)
     .length;
 
+  // ---------------------------------------------------------------------------
+  // SEND THE RESULT TO FOUNDRY CHAT
+  // ---------------------------------------------------------------------------
+  //
+  // Foundry's Roll object can be displayed as a ChatMessage.
+  //
+  // toMessage() creates the standard Foundry chat output containing the
+  // rendered dice roll.
+  //
+  // We provide two pieces of additional information:
+  //
+  //     speaker
+  //         Who/what is making the roll.
+  //
+  //     flavor
+  //         Additional descriptive text displayed with the roll.
   await roll.toMessage({
+    // -------------------------------------------------------------------------
+    // DETERMINE THE CHAT SPEAKER
+    // -------------------------------------------------------------------------
+    //
+    // If an Actor was supplied, associate the message with that Actor.
+    //
+    //     actor ? ... : ...
+    //
+    // is JavaScript's conditional (ternary) operator.
+    //
+    // It means:
+    //
+    //     IF actor exists
+    //         use ChatMessage.getSpeaker({ actor })
+    //
+    //     OTHERWISE
+    //         use the normal current speaker
+    //
+    // This allows the same function to work both from an Actor-specific
+    // interface and from a standalone dice roller.
     speaker: actor 
       ? ChatMessage.getSpeaker({ actor })
       : ChatMessage.getSpeaker(),
+
+    // -------------------------------------------------------------------------
+    // CHAT MESSAGE DESCRIPTION
+    // -------------------------------------------------------------------------
+    //
+    // flavor is additional text displayed alongside the roll.
+    //
+    // Template literals use backticks (`) and allow us to insert variables
+    // using ${...}.
+    //
+    // For example:
+    //
+    //     type = "advantage"
+    //     successes = 2
+    //
+    // produces:
+    //
+    //     advantage roll: 2 successes
     flavor: `${type} roll: ${successes} successes`
   });
 
+  // ---------------------------------------------------------------------------
+  // RETURN THE NUMBER OF SUCCESSES
+  // ---------------------------------------------------------------------------
+  //
+  // The function doesn't just display the result in Chat.
+  //
+  // It also returns the number of successes to the code that called it.
+  //
+  // This is useful because another part of the system could do something with
+  // the result:
+  //
+  //     const successes = await rollTinySupers("normal", actor);
+  //
+  // and then use successes for further game logic.
+  //
+  // This is another useful separation:
+  //
+  //     dice.mjs
+  //         performs the roll and returns the result
+  //
+  //     Application
+  //         decides how the user initiates the roll
+  //
+  //     Foundry Chat
+  //         displays the result
   return successes;
 }

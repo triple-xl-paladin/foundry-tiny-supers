@@ -1,19 +1,129 @@
+/* ============================================================
+   Tiny Supers Actor Sheet
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Overall sheet
+   ------------------------------------------------------------ */
+
+/*
+ * Make the sheet a vertical layout:
+ *
+ *   Header
+ *   Body
+ *   Footer
+ *
+ * The body is allowed to grow and shrink between the header
+ * and footer.
+ */
 .tiny-supers.actor-sheet {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
+
+/* ------------------------------------------------------------
+   Sheet body
+   ------------------------------------------------------------ */
+
+/*
+ * The body occupies all available space left between the
+ * header and footer.
+ *
+ * min-height: 0 is important when using flexbox. Without it,
+ * the body can refuse to shrink and the sheet may grow beyond
+ * the available window instead of scrolling.
+ */
 .tiny-supers.actor-sheet .sheet-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
 }
 
-.archetype, .trait {
+
+/* ------------------------------------------------------------
+   Fieldsets
+   ------------------------------------------------------------ */
+
+/*
+ * Give each section some breathing room.
+ */
+.tiny-supers.actor-sheet fieldset {
+  margin-bottom: 12px;
+}
+
+
+/* ------------------------------------------------------------
+   Labels
+   ------------------------------------------------------------ */
+
+/*
+ * IMPORTANT:
+ *
+ * Don't use:
+ *
+ *     label { ... }
+ *
+ * because that affects labels outside Tiny Supers too.
+ *
+ * By starting with .tiny-supers.actor-sheet we restrict this
+ * rule to our character sheet.
+ */
+.tiny-supers.actor-sheet label {
+  display: block;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+
+/* ------------------------------------------------------------
+   Text inputs and textareas
+   ------------------------------------------------------------ */
+
+/*
+ * Make form controls use the available width of the fieldset.
+ */
+.tiny-supers.actor-sheet input,
+.tiny-supers.actor-sheet textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+
+/*
+ * Give textareas a sensible starting height.
+ */
+.tiny-supers.actor-sheet textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+
+/* ------------------------------------------------------------
+   Archetype and traits
+   ------------------------------------------------------------ */
+
+/*
+ * white-space: pre-line means that newline characters in the
+ * text are displayed as line breaks while still allowing the
+ * browser to wrap long lines.
+ */
+.tiny-supers.actor-sheet .archetype,
+.tiny-supers.actor-sheet .trait {
   white-space: pre-line;
 }
 
-label {
-  font-size: 21px;
+
+/* ------------------------------------------------------------
+   Sheet footer
+   ------------------------------------------------------------ */
+
+/*
+ * Keep the footer below the scrolling body.
+ */
+.tiny-supers.actor-sheet .sheet-footer {
+  flex: 0 0 auto;
 }
