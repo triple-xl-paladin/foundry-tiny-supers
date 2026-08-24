@@ -146,3 +146,14 @@
 .tiny-supers.actor-sheet .sheet-footer {
   flex: 0 0 auto;
 }
+
+.tiny-supers.dice-roller {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  pointer-events: all;
+}
+
+.tiny-supers.dice-roller button {
+  flex: 1;
+}

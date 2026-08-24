@@ -15,7 +15,7 @@
   },
   "esmodules": [
     "tiny-supers.mjs",
-    "module/tiny-supers-dice-roller.mjs"
+    "module/tiny-supers-chat-controls.mjs"
   ],
   "styles": [
     "styles/tiny-supers.css"
