@@ -427,12 +427,16 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
      * is NOT the sheet instance. We cannot write this.actor here — that
      * expression is undefined in static context.
      *
-     * Instead we reach for the document through the form we were passed:
+     * Instead we reach for the document through the application registry:
      *
-     *     form.object
+     *     event.currentTarget.closest(".application")
+     *         →  the <section class="application"> DOM element
+     *     foundry.applications.instances.get(id)
+     *         →  the live sheet instance
+     *     app.actor
+     *         →  the Actor Document that this sheet represents
      *
-     * is the Actor Document that this sheet represents. That is the
-     * reliable reference inside a static handler.
+     * That is the reliable reference inside a static handler.
      *
      * (In an instance method, this.actor would be the same Document —
      * the difference is purely about which kind of method we are in.)

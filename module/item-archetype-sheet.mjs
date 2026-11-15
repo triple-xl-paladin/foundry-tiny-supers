@@ -487,19 +487,23 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     // is NOT the sheet instance. We cannot write this.item here — that
     // expression is undefined in static context.
     //
-    // Instead we reach for the Document through the form we were passed:
+    // Instead we reach for the Document through the application registry:
     //
-    //     form.object
+    //     event.currentTarget.closest(".application")
+    //         →  the <section class="application"> DOM element
+    //     foundry.applications.instances.get(id)
+    //         →  the live sheet instance
+    //     app.item
+    //         →  the actual Foundry Item Document being edited
     //
-    // is the actual Foundry Item Document being edited. That is the
-    // reliable reference inside a static handler.
+    // That is the reliable reference inside a static handler.
     //
     // "formData.object" contains the submitted values converted into an
     // object suitable for updating the Document.
     //
     // Therefore:
     //
-    //     form.object.update(formData.object)
+    //     app.item.update(updateData)
     //
     // means:
     //
@@ -529,25 +533,28 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     //
     //     form.object.update(formData.object);
     //
-    // and it is useful to understand why we ultimately use this.item instead.
+    // and it is useful to understand why we ultimately use the application
+    // registry instead.
     //
     // "form" is the HTML <form> element.
     //
-    // "form.object" is related to Foundry's form/application machinery, but
-    // it is not the clearest or most reliable reference to use when our
-    // intention is specifically:
+    // "form.object" does NOT exist — the <form> element has no such property.
     //
-    //     "Update the Item represented by this sheet."
+    // In a STATIC method, "this" is the class, not the sheet instance, so
+    // this.item is also unavailable.
     //
-    // ItemSheetV2 explicitly provides:
+    // The reliable pattern is:
     //
-    //     this.item
-    //
-    // as the Item Document associated with the sheet.
+    //     event.currentTarget.closest(".application")
+    //         →  the <section class="application"> DOM element
+    //     foundry.applications.instances.get(id)
+    //         →  the live sheet instance
+    //     app.item
+    //         →  the Item Document associated with the sheet
     //
     // Therefore:
     //
-    //     this.item.update(...)
+    //     app.item.update(updateData)
     //
     // clearly expresses what we actually mean and avoids confusing the
     // HTML form with the underlying Foundry Document.

@@ -152,8 +152,8 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
     // could load off-screen, and on a larger window it would sit in an
     // arbitrary corner.
     //
-    // Instead, the initial position is calculated in _onRender() from the
-    // current window.innerWidth / window.innerHeight and then clamped so
+    // Instead, the initial position is calculated in _onFirstRender() from
+    // the current window.innerWidth / window.innerHeight and then clamped so
     // the window always stays fully visible.
     position: {
       width: 160,

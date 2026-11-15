@@ -446,12 +446,12 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // Remember the important objects involved here:
     //
-    //     form.object
+    //     app.item
     //         The actual Foundry Item Document.
     //
     //         NOTE: this is a STATIC method, so "this" is not the sheet
-    //         instance and this.item would be undefined. form.object is
-    //         the reliable way to reach the Document from here.
+    //         instance and this.item would be undefined. We reach the
+    //         Document through the application registry instead.
     //
     //     form
     //         The HTML <form> element.
@@ -462,7 +462,7 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // Therefore:
     //
-    //     form.object.update(formData.object)
+    //     app.item.update(updateData)
     //
     // means:
     //
@@ -496,12 +496,20 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // The important lesson was to distinguish the FORM from the DOCUMENT.
     //
-    // The sheet already gives us the actual Item through:
+    // "form" is the HTML <form> element — it has no ".object" property.
     //
-    //     this.item
+    // In a STATIC method, "this" is the class, not the sheet instance, so
+    // this.item is also unavailable.
     //
-    // That is the clearest and most direct object to update when this sheet
-    // represents an Item.
+    // The reliable pattern is to reach the Document through the application
+    // registry:
+    //
+    //     event.currentTarget.closest(".application")
+    //         →  the <section class="application"> DOM element
+    //     foundry.applications.instances.get(id)
+    //         →  the live sheet instance
+    //     app.item
+    //         →  the Item Document associated with the sheet
     //
     // Keeping the old attempt commented here is useful because it records
     // something we tried while learning the ApplicationV2 API.
