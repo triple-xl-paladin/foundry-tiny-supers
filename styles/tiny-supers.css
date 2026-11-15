@@ -18,142 +18,691 @@
  */
 
 /* ============================================================
-   Tiny Supers Actor Sheet
+   TINY SUPERS — SHARED THEME
+   ============================================================
+   Inspired by the foundry-tinyd6 system.
+
+   Design language:
+     - parchment / aged-paper backgrounds
+     - serif headings (Georgia, Times New Roman fallback)
+     - double-bordered sections with floating title badges
+     - clipped-corner (notched) headers via clip-path
+     - transparent inputs that gain a border on hover/focus
+     - dark roll buttons with dice icons
+
+   IMPORTANT:
+   Every rule starts with .tiny-supers so that nothing leaks
+   outside the system's own elements.
    ============================================================ */
 
 /* ------------------------------------------------------------
-   Overall sheet
+   CSS custom properties (design tokens)
+   ------------------------------------------------------------ */
+
+.tiny-supers {
+  /*
+   * Parchment palette.
+   *
+   * These values are chosen to evoke aged paper and ink.
+   * Adjust them here if you want a different theme.
+   */
+  --ts-parchment: #f4f1e8;
+  --ts-parchment-dark: #e8e4d8;
+  --ts-ink: #2c2c2c;
+  --ts-ink-light: #555;
+  --ts-border: #8a8578;
+  --ts-accent: #6b5b45;
+  --ts-input-focus-bg: #fff;
+  --ts-input-focus-border: #7a7971;
+  --ts-button-bg: #4a4a4a;
+  --ts-button-color: #f0ede6;
+
+  /*
+   * Font stacks.
+   *
+   * Headings use a serif stack that approximates the look of
+   * "IM Fell Great Primer" (the reference project's heading font)
+   * without shipping font files.
+   *
+   * Body text uses a clean serif for the parchment feel.
+   */
+  --ts-font-heading: Georgia, "Times New Roman", Times, serif;
+  --ts-font-body: Georgia, "Times New Roman", Times, serif;
+
+  /*
+   * Notch size for clip-path headers.
+   *
+   * The reference project uses 12px. We keep the same value so
+   * the visual language matches.
+   */
+  --ts-notch: 12px;
+}
+
+
+/* ------------------------------------------------------------
+   Section headers (h2.section-header)
    ------------------------------------------------------------ */
 
 /*
- * Make the sheet a vertical layout:
+ * The dark bar behind section titles.
  *
- *   Header
- *   Body
- *   Footer
+ * In the reference project this is:
  *
- * The body is allowed to grow and shrink between the header
- * and footer.
+ *     .section-header { background: $h1-background; color: $h1-text; }
+ *
+ * We replicate it with a dark background and light text.
  */
-.tiny-supers.actor-sheet {
+.tiny-supers .section-header {
+  background-color: var(--ts-ink);
+  color: var(--ts-parchment);
+  font-family: var(--ts-font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 1.2rem;
+  margin: 0;
+  display: inline-block;
+}
+
+
+/* ------------------------------------------------------------
+   Floating headers (h1.floating-header)
+   ------------------------------------------------------------ */
+
+/*
+ * The floating badge that sits on the border of a section.
+ *
+ * The section it belongs to must be:
+ *
+ *     position: relative;
+ *     border: 8px double <color>;
+ *
+ * The badge is absolutely positioned so it straddles the top edge.
+ *
+ * clip-path: polygon(...) creates the notched-corner shape.
+ *
+ * The reference project uses $notchSize = 12px. We use the same
+ * value via the --ts-notch custom property.
+ */
+.tiny-supers .floating-header {
+  position: absolute;
+  top: -0.9rem;
+  right: 1rem;
+  z-index: 2;
+  color: var(--ts-parchment);
+  background-color: var(--ts-ink);
+  padding: 0.4rem 1.2rem;
+  font-family: var(--ts-font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  clip-path: polygon(
+    0% var(--ts-notch),
+    var(--ts-notch) 0%,
+    calc(100% - var(--ts-notch)) 0%,
+    100% var(--ts-notch),
+    100% calc(100% - var(--ts-notch)),
+    calc(100% - var(--ts-notch)) 100%,
+    var(--ts-notch) 100%,
+    0% calc(100% - var(--ts-notch))
+  );
+}
+
+/*
+ * Smaller floating headers (h2 level) sit slightly lower.
+ */
+.tiny-supers h2.floating-header {
+  top: -0.7rem;
+  font-size: 1rem;
+}
+
+
+/* ------------------------------------------------------------
+   Double-bordered sections
+   ------------------------------------------------------------ */
+
+/*
+ * The double border gives each section a "framed" look, like a
+ * page in an old book.
+ *
+ * position: relative is required so that .floating-header can be
+ * absolutely positioned inside it.
+ *
+ * z-index: 1 ensures the section sits above any sibling that
+ * might have a negative z-index.
+ */
+.tiny-supers .double-bordered {
+  position: relative;
+  border: 8px double var(--ts-border);
+  padding: 15px;
+  z-index: 1;
+  margin-bottom: 1.5rem;
+  background-color: var(--ts-parchment);
+  font-family: var(--ts-font-body);
+  color: var(--ts-ink);
+}
+
+
+/* ------------------------------------------------------------
+   Form fields — property rows
+   ------------------------------------------------------------ */
+
+/*
+ * A "property" row is a label + input pair laid out horizontally:
+ *
+ *     <div class="property">
+ *       <label>Stress</label>
+ *       <input ... />
+ *     </div>
+ *
+ * The bottom border acts as a subtle divider between fields.
+ *
+ * The reference project uses:
+ *
+ *     .border-bottom { border-bottom: 1px solid $gray-900 !important; }
+ *
+ * We use a lighter border to match the parchment palette.
+ */
+.tiny-supers .property {
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--ts-border);
 }
 
-
-/* ------------------------------------------------------------
-   Sheet body
-   ------------------------------------------------------------ */
-
 /*
- * The body occupies all available space left between the
- * header and footer.
+ * The label takes up available space; the input sits to the right.
  *
- * min-height: 0 is important when using flexbox. Without it,
- * the body can refuse to shrink and the sheet may grow beyond
- * the available window instead of scrolling.
+ * text-align: right on the input mirrors the reference project,
+ * where numeric values are right-aligned.
  */
-.tiny-supers.actor-sheet .sheet-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
+.tiny-supers .property label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ts-ink);
+  font-family: var(--ts-font-body);
+}
+
+.tiny-supers .property input,
+.tiny-supers .property textarea {
+  text-align: right;
+  max-width: 50%;
+}
+
+/*
+ * For properties that span two lines (e.g. a label on top,
+ * a textarea below), stack vertically.
+ */
+.tiny-supers .property--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.tiny-supers .property--stacked label {
+  flex: initial;
+}
+
+.tiny-supers .property--stacked input,
+.tiny-supers .property--stacked textarea {
+  max-width: 100%;
+  text-align: left;
 }
 
 
 /* ------------------------------------------------------------
-   Fieldsets
+   Inputs, textareas, selects
    ------------------------------------------------------------ */
 
 /*
- * Give each section some breathing room.
+ * Transparent inputs — no border until the user hovers or focuses.
+ *
+ * This is the reference project's signature input treatment:
+ *
+ *     input {
+ *       background-color: transparent;
+ *       border: 0;
+ *       padding: 1px 0;
+ *     }
+ *
+ *     input:hover, input:focus {
+ *       padding: 1px 3px;
+ *       background-color: $input-focus-background;
+ *       border: 1px solid $input-focus-border;
+ *     }
+ *
+ * We replicate it with our own palette.
  */
-.tiny-supers.actor-sheet fieldset {
-  margin-bottom: 12px;
+.tiny-supers input,
+.tiny-supers textarea,
+.tiny-supers select {
+  background-color: transparent;
+  border: 1px solid transparent;
+  font-family: var(--ts-font-body);
+  font-size: 0.95rem;
+  padding: 1px 0;
+  color: var(--ts-ink);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tiny-supers input:hover,
+.tiny-supers input:focus,
+.tiny-supers textarea:hover,
+.tiny-supers textarea:focus,
+.tiny-supers select:hover,
+.tiny-supers select:focus {
+  padding: 1px 3px;
+  background-color: var(--ts-input-focus-bg);
+  border: 1px solid var(--ts-input-focus-border);
+  outline: none;
+}
+
+/*
+ * Textareas get a sensible minimum height and no resize handle
+ * (the reference project sets resize: none).
+ */
+.tiny-supers textarea {
+  min-height: 3rem;
+  resize: none;
 }
 
 
 /* ------------------------------------------------------------
-   Labels
+   Buttons — form controls only
    ------------------------------------------------------------ */
 
 /*
  * IMPORTANT:
  *
- * Don't use:
+ * This rule is scoped to buttons INSIDE the sheet body, NOT the
+ * entire application.
  *
- *     label { ... }
+ * Foundry's window bar (close, minimize, lock/unlock) contains
+ * <button> elements that are children of the .tiny-supers app root.
  *
- * because that affects labels outside Tiny Supers too.
+ * If we styled .tiny-supers button, we would override Foundry's
+ * own button styling (font, size, icon rendering) and the window
+ * controls would display broken icons (boxes and dots instead of
+ * Font Awesome glyphs).
  *
- * By starting with .tiny-supers.actor-sheet we restrict this
- * rule to our character sheet.
+ * By restricting this to .sheet-body, we only affect buttons that
+ * are part of the form (Save, etc.), not the window chrome.
  */
-.tiny-supers.actor-sheet label {
-  display: block;
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 4px;
+.tiny-supers.actor-sheet .sheet-body button {
+  font-family: var(--ts-font-body);
+  cursor: pointer;
+}
+
+
+/* ============================================================
+   TINY SUPERS — ACTOR SHEET
+   ============================================================ */
+
+/*
+ * The actor sheet root.
+ *
+ * The parchment background covers the entire window.
+ *
+ * The window-content area scrolls so that long sheets don't
+ * overflow the window.
+ */
+.tiny-supers.actor-sheet {
+  background-color: var(--ts-parchment);
+  color: var(--ts-ink);
+  font-family: var(--ts-font-body);
+}
+
+.tiny-supers.actor-sheet .window-content {
+  overflow-y: auto !important;
+}
+
+/*
+ * The header holds the actor's portrait and name.
+ *
+ * The portrait is capped at 64px to match the reference project:
+ *
+ *     .character-art, .logo { max-height: toRem(64px); }
+ */
+.tiny-supers.actor-sheet .sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tiny-supers.actor-sheet .sheet-header img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid var(--ts-border);
+}
+
+/*
+ * The actor name input spans the remaining header space.
+ *
+ * It uses the heading font for a title-like appearance.
+ */
+.tiny-supers.actor-sheet .sheet-header input[name="name"] {
+  flex: 1;
+  font-family: var(--ts-font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: left;
 }
 
 
 /* ------------------------------------------------------------
-   Text inputs and textareas
+   Character section
    ------------------------------------------------------------ */
 
 /*
- * Make form controls use the available width of the fieldset.
+ * The character section contains the hero's core identity fields.
+ *
+ * It uses the .double-bordered class for the framed look.
  */
-.tiny-supers.actor-sheet input,
-.tiny-supers.actor-sheet textarea {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 10px;
+.tiny-supers.actor-sheet .character {
+  /* inherits .double-bordered styles */
 }
 
+/* ------------------------------------------------------------
+   Stress meter
+   ------------------------------------------------------------ */
 
 /*
- * Give textareas a sensible starting height.
+ * Stress is displayed as a row of small boxes.
+ *
+ * Each box is a checkbox styled as a square. Checked = stressed.
+ *
+ * The reference project uses:
+ *
+ *     .health-meter { line-height: toRem(26px); }
+ *
+ * We keep the same line height so the boxes align neatly.
  */
-.tiny-supers.actor-sheet textarea {
-  min-height: 70px;
-  resize: vertical;
+.tiny-supers .stress-meter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0.5rem 0;
+  line-height: 1;
+}
+
+.tiny-supers .stress-box {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0;
+  accent-color: var(--ts-accent);
+  cursor: pointer;
 }
 
 
 /* ------------------------------------------------------------
-   Archetype and traits
+   Archetype block
    ------------------------------------------------------------ */
 
 /*
- * white-space: pre-line means that newline characters in the
- * text are displayed as line breaks while still allowing the
- * browser to wrap long lines.
+ * The archetype block displays the embedded archetype item.
+ *
+ * It sits inside the character section as a bordered sub-block.
  */
-.tiny-supers.actor-sheet .archetype,
-.tiny-supers.actor-sheet .trait {
+.tiny-supers.actor-sheet .archetype-block {
+  border: 1px solid var(--ts-border);
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  background-color: var(--ts-parchment-dark);
+  font-size: 0.9rem;
+}
+
+.tiny-supers.actor-sheet .archetype-block .archetype-name {
+  font-weight: 700;
+  font-family: var(--ts-font-heading);
+}
+
+.tiny-supers.actor-sheet .archetype-block .archetype-desc {
   white-space: pre-line;
+  margin: 0.25rem 0;
+  color: var(--ts-ink-light);
+}
+
+.tiny-supers.actor-sheet .archetype-block .archetype-meta {
+  font-size: 0.85rem;
+  color: var(--ts-ink-light);
+}
+
+/*
+ * The delete button (visible only in edit mode).
+ */
+.tiny-supers.actor-sheet .item-delete {
+  color: var(--ts-ink-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  float: right;
+}
+
+.tiny-supers.actor-sheet .item-delete:hover {
+  color: #a33;
 }
 
 
 /* ------------------------------------------------------------
-   Sheet footer
+   Traits list
    ------------------------------------------------------------ */
 
 /*
- * Keep the footer below the scrolling body.
+ * Traits are displayed as a bordered list, similar to the
+ * reference project's .actor-items > .actor-item pattern:
+ *
+ *     .actor-items {
+ *       list-style: none;
+ *       & > .actor-item {
+ *         border-bottom: 1px solid $gray-400;
+ *         margin-bottom: 0.5rem;
+ *       }
+ *     }
  */
-.tiny-supers.actor-sheet .sheet-footer {
-  flex: 0 0 auto;
+.tiny-supers.actor-sheet .traits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.tiny-supers.dice-roller {
+.tiny-supers.actor-sheet .traits-list .trait-item {
+  border-bottom: 1px solid var(--ts-border);
+  padding: 0.4rem 0;
+  margin-bottom: 0;
+}
+
+.tiny-supers.actor-sheet .traits-list .trait-item:last-child {
+  border-bottom: none;
+}
+
+.tiny-supers.actor-sheet .traits-list .trait-name {
+  font-weight: 700;
+}
+
+.tiny-supers.actor-sheet .traits-list .trait-desc {
+  white-space: pre-line;
+  color: var(--ts-ink-light);
+  font-size: 0.9rem;
+}
+
+
+/* ------------------------------------------------------------
+   Personality / weapons sections
+   ------------------------------------------------------------ */
+
+/*
+ * These sections use the same .double-bordered treatment.
+ *
+ * The textareas inside them use .property--stacked for a
+ * label-on-top layout.
+ */
+.tiny-supers.actor-sheet .personality,
+.tiny-supers.actor-sheet .weapons {
+  /* inherits .double-bordered styles */
+}
+
+
+/* ============================================================
+   TINY SUPERS — DICE ROLLER
+   ============================================================ */
+
+/*
+ * The dice roller window.
+ *
+ * The reference project uses:
+ *
+ *     .die-roller {
+ *       .window-content {
+ *         overflow: hidden;
+ *         width: 100%;
+ *         z-index: 1001;
+ *       }
+ *     }
+ *
+ *     button {
+ *       background: $button-background;
+ *       color: $button-color;
+ *       line-height: 2.5rem;
+ *       font-size: 1.6rem;
+ *       border: 0;
+ *     }
+ *
+ * We replicate with our own palette.
+ */
+.tiny-supers.dice-roller .window-content {
+  overflow: hidden;
+  width: 100%;
+  padding: 0;
+  background-color: var(--ts-parchment);
+}
+
+/*
+ * The roll buttons sit in a centered flex row.
+ *
+ * IMPORTANT SCOPING NOTE:
+ *
+ * These button rules are scoped to .die-roller-content / .roll-dice
+ * rather than to .tiny-supers.dice-roller.
+ *
+ * The dice-roller template is used in TWO places:
+ *
+ *   1. The standalone TinySupersDiceRoller ApplicationV2 window, where
+ *      ApplicationV2 adds the "tiny-supers" and "dice-roller" classes
+ *      to the window element.
+ *
+ *   2. The Chat Log, where tiny-supers-chat-controls.mjs renders the
+ *      template and inserts the raw HTML next to the chat input — with
+ *      NO application classes applied.
+ *
+ * Scoping by .die-roller-content (the template's root element class)
+ * means both surfaces share the same styling, without leaking outside
+ * the system's own elements.
+ *
+ * The reference project uses:
+ *
+ *     .d-flex.die-roller.justify-content-center
+ *
+ * We hand-roll the equivalent.
+ */
+/*
+ * IMPORTANT:
+ *
+ * This rule intentionally does NOT carry the .tiny-supers prefix.
+ *
+ * The dice-roller template is injected into Foundry's Chat Log
+ * (see tiny-supers-chat-controls.mjs), where the surrounding DOM is
+ * Foundry's own #chat-notifications container — which has NO
+ * .tiny-supers class on it.
+ *
+ * Foundry v14 sets pointer-events: none on the entire #ui-right
+ * sidebar (the "faded" UI region). Without an explicit
+ * pointer-events: auto here, the injected buttons inherit
+ * pointer-events: none and are unclickable.
+ *
+ * The .die-roller-content class is unique to this template, so
+ * omitting the .tiny-supers prefix is safe — it cannot collide
+ * with Foundry's own elements.
+ */
+.die-roller-content {
   display: flex;
   flex-direction: row;
-  gap: 8px;
-  pointer-events: all;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.25rem;
+  pointer-events: auto;
+
+  /*
+   * Design tokens for the dice buttons.
+   *
+   * These are re-declared here (in addition to the .tiny-supers
+   * block above) because the dice-roller template is injected
+   * into Foundry's Chat Log, where there is NO .tiny-supers
+   * ancestor element. Without these, var(--ts-button-bg) etc.
+   * would resolve to nothing and the buttons would be unstyled.
+   *
+   * The values must match the .tiny-supers definitions above.
+   */
+  --ts-button-bg: #4a4a4a;
+  --ts-button-color: #f0ede6;
+  --ts-font-heading: Georgia, "Times New Roman", Times, serif;
 }
 
-.tiny-supers.dice-roller button {
+/*
+ * Individual roll buttons.
+ *
+ * Dark background, light text, large font, no border.
+ *
+ * The reference project uses:
+ *
+ *     line-height: 2.5rem;
+ *     font-size: 1.6rem;
+ *
+ * We keep the same sizing.
+ *
+ * The .roll-dice class is also unique to this template, so these
+ * rules omit the .tiny-supers prefix — same reasoning as above.
+ */
+.roll-dice {
   flex: 1;
+  background: var(--ts-button-bg);
+  color: var(--ts-button-color);
+  line-height: 2.5rem;
+  font-size: 1.3rem;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ts-font-heading);
+  letter-spacing: 0.03em;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.roll-dice:hover {
+  background: #5a5a5a;
+}
+
+.roll-dice:active {
+  background: #3a3a3a;
+}
+
+/*
+ * The dice icon inside each button.
+ *
+ * Font Awesome icons are sized to match the button text.
+ */
+.roll-dice i {
+  font-size: 1.3rem;
+}
+
+/*
+ * Text label next to the icon.
+ */
+.roll-dice span.roll-label {
+  font-size: 0.85rem;
 }

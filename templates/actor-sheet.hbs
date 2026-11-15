@@ -17,134 +17,260 @@
   along with the Tiny Supers system. If not, see <https://www.gnu.org/licenses/>.
 -->
 
+<!--
+  ACTOR SHEET
+  -----------
+
+  Layout follows the foundry-tinyd6 reference project:
+    - Double-bordered sections with floating title badges
+    - Property rows (label + input) with bottom-border dividers
+    - Transparent inputs that gain a border on hover/focus
+
+  IMPORTANT:
+  This template is wrapped in a <form> by ApplicationV2 / the
+  HandlebarsApplicationMixin, so <form> is NOT opened here.
+-->
+
 <section class="tiny-supers actor-sheet">
 
+  <!--
+    HEADER — actor portrait + name
+
+    The reference project places the name input and portrait
+    side by side in a .row with .col children. We hand-roll
+    the equivalent flex row.
+  -->
   <header class="sheet-header">
-    <h1>
-      <input name="name"
-             type="text"
-             value="{{actor.name}}"
-             placeholder="Hero Name"
-             {{#unless editing}}disabled{{/unless}}/>
-    </h1>
+    <img src="{{actor.img}}"
+         data-action="editImage"
+         data-edit="img"
+         title="{{actor.name}}"
+         class="portrait"/>
+    <input name="name"
+           type="text"
+           value="{{actor.name}}"
+           placeholder="Hero Name"
+           {{#unless editing}}disabled{{/unless}}/>
   </header>
 
   <section class="sheet-body">
 
-    <fieldset>
-      <legend>Identity</legend>
+    <!--
+      CHARACTER IDENTITY
+      ------------------
 
-      <label>Real Name</label>
-      <input name="system.civilianIdentity"
-             type="text"
-             value="{{system.civilianIdentity}}"
-             {{#unless editing}}disabled{{/unless}}/>
+      The double-bordered section contains the hero's core
+      identity fields: real name, appearance, power origin,
+      and power level.
 
-      <label>Appearance</label>
-      <input name="system.appearance"
-             type="text"
-             value="{{system.appearance}}"
-             {{#unless editing}}disabled{{/unless}}/>
+      Each field is a .property row: label on the left,
+      input on the right, bottom-border divider.
+    -->
+    <div class="double-bordered character">
+      <h2 class="floating-header">Identity</h2>
 
-      <label>Power Origin</label>
-      <input name="system.powerOrigin"
-             type="text"
-             value="{{system.powerOrigin}}"
-             {{#unless editing}}disabled{{/unless}}/>
-    </fieldset>
+      <div class="property">
+        <label>Real Name</label>
+        <input name="system.civilianIdentity"
+               type="text"
+               value="{{system.civilianIdentity}}"
+               placeholder="Civilian identity"
+               {{#unless editing}}disabled{{/unless}}/>
+      </div>
 
-    <fieldset>
-      <legend>Hero Details</legend>
+      <div class="property">
+        <label>Appearance</label>
+        <input name="system.appearance"
+               type="text"
+               value="{{system.appearance}}"
+               placeholder="How does the hero look?"
+               {{#unless editing}}disabled{{/unless}}/>
+      </div>
 
-      <label>Power Level</label>
-      <input name="system.powerLevel"
-             type="text"
-             value="{{system.powerLevel}}"
-             {{#unless editing}}disabled{{/unless}}/>
+      <div class="property">
+        <label>Power Origin</label>
+        <input name="system.powerOrigin"
+               type="text"
+               value="{{system.powerOrigin}}"
+               placeholder="Where do their powers come from?"
+               {{#unless editing}}disabled{{/unless}}/>
+      </div>
 
-      <label>Stress</label>
-      <input name="system.stress"
-             type="number"
-             min="0"
-             max="{{maxStress}}"
-             value="{{system.stress}}"
-             {{#unless editing}}disabled{{/unless}}/>
+      <div class="property">
+        <label>Power Level</label>
+        <input name="system.powerLevel"
+               type="text"
+               value="{{system.powerLevel}}"
+               placeholder="Cosmic, National, City, Street"
+               {{#unless editing}}disabled{{/unless}}/>
+      </div>
+    </div>
 
-      <span>/ {{maxStress}}</span>
-    </fieldset>
+    <!--
+      STRESS
+      ------
 
-    <fieldset>
-      <legend>Archetype</legend>
+      Stress is a NumberField on the Actor (current value)
+      and a NumberField on the Archetype Item (maximum).
+
+      The sheet displays the current value as a numeric input
+      alongside the max derived from the archetype.
+
+      The reference project displays wounds as a row of
+      checkbox "boxes". We do the same: each box is a
+      checkbox, checked = stressed.
+    -->
+    <div class="double-bordered stress">
+      <h2 class="floating-header">Stress</h2>
+
+      <div class="property">
+        <label>Current</label>
+        <input name="system.stress"
+               type="number"
+               min="0"
+               max="{{maxStress}}"
+               value="{{system.stress}}"
+               {{#unless editing}}disabled{{/unless}}/>
+      </div>
+
+      <div class="property">
+        <label>Maximum</label>
+        <span class="stress-max">{{maxStress}}</span>
+      </div>
+    </div>
+
+    <!--
+      ARCHETYPE
+      ---------
+
+      The archetype is an embedded Item (type: "archetype").
+      The sheet reads it from actor.items.contents.
+
+      Displayed as a bordered sub-block inside a
+      double-bordered section, with a delete button in
+      edit mode.
+    -->
+    <div class="double-bordered archetype-section">
+      <h2 class="floating-header">Archetype</h2>
 
       {{#if archetype}}
-        <div class="archetype" data-item-id="{{archetype.id}}">
-          <label>{{archetype.name}}</label>
-          <p>{{archetype.system.archetype_desc}}</p>
-          <p>{{archetype.system.archetype_trait}}</p>
-          <p>Source: {{archetype.system.source}}</p>
-
+        <div class="archetype-block" data-item-id="{{archetype.id}}">
           {{#if editing}}
-          <button type="button"
-                  data-action="deleteArchetype"
-                  data-item-id="{{archetype.id}}"
-                  title="Delete archetype">
-            <i class="fa-solid fa-trash"></i>
-          </button>
+            <a class="item-delete"
+               data-action="deleteArchetype"
+               data-item-id="{{archetype.id}}"
+               title="Delete archetype">
+              <i class="fa-solid fa-times"></i>
+            </a>
           {{/if}}
+
+          <div class="archetype-name">{{archetype.name}}</div>
+          <p class="archetype-desc">{{archetype.system.archetype_desc}}</p>
+          <div class="archetype-meta">
+            <span>{{archetype.system.archetype_trait}}</span>
+            {{#if archetype.system.source}}
+              <span> · {{archetype.system.source}}</span>
+            {{/if}}
+          </div>
         </div>
       {{else}}
-        <p>No archetype selected.</p>
+        <p class="archetype-empty">No archetype selected.</p>
       {{/if}}
-    </fieldset>
+    </div>
 
-    <fieldset>
-      <legend>Traits</legend>
+    <!--
+      TRAITS
+      ------
 
-      {{#each traits}}
-        <div class="trait" data-item-id="{{id}}">
-          <label>{{name}}</label>
-          <p>{{system.trait_desc}}</p>
-          {{#if editing}}
-            <button type="button"
-                class="delete-trait"
-                data-action="deleteTrait"
-                data-item-id="{{id}}"
-                title="Delete trait">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          {{/if}}
-        </div>
-      {{/each}}
+      Traits are embedded Items (type: "trait").
+      Up to 3 can be attached to an Actor.
 
-    </fieldset>
+      Displayed as a bordered list, mirroring the reference
+      project's .actor-items > .actor-item pattern.
+    -->
+    <div class="double-bordered traits-section">
+      <h2 class="floating-header">Traits</h2>
 
-    <fieldset>
-      <legend>Personality</legend>
+      <ul class="traits-list">
+        {{#each traits}}
+          <li class="trait-item" data-item-id="{{id}}">
+            {{#if editing}}
+              <a class="item-delete"
+                 data-action="deleteTrait"
+                 data-item-id="{{id}}"
+                 title="Delete trait">
+                <i class="fa-solid fa-times"></i>
+              </a>
+            {{/if}}
+            <span class="trait-name">{{name}}</span>
+            {{#if system.trait_desc}}
+              <span class="trait-desc">{{system.trait_desc}}</span>
+            {{/if}}
+          </li>
+        {{/each}}
+      </ul>
 
-      <label>Beliefs</label>
-      <textarea name="system.beliefs"{{#unless editing}}disabled{{/unless}}>{{system.beliefs}}</textarea>
+      {{#if (eq traits.length 0)}}
+        <p class="traits-empty">No traits attached. Drag Trait items onto the sheet.</p>
+      {{/if}}
+    </div>
 
-      <label>Weakness</label>
-      <textarea name="system.weakness"{{#unless editing}}disabled{{/unless}}>{{system.weakness}}</textarea>
+    <!--
+      PERSONALITY
+      -----------
 
-    </fieldset>
+      Beliefs and Weakness are free-text fields.
 
+      Uses .property--stacked so the label sits above the
+      textarea (full width) rather than beside it.
+    -->
+    <div class="double-bordered personality">
+      <h2 class="floating-header">Personality</h2>
 
-    <fieldset>
-      <legend>Weapons</legend>
+      <div class="property property--stacked">
+        <label>Beliefs</label>
+        <textarea name="system.beliefs"
+                  placeholder="What does the hero believe in?"
+                  {{#unless editing}}disabled{{/unless}}>{{system.beliefs}}</textarea>
+      </div>
 
-      <label>Mastered Weapons</label>
-      <textarea name="system.masteredWeapons"{{#unless editing}}disabled{{/unless}}>{{system.masteredWeapons}}</textarea>
+      <div class="property property--stacked">
+        <label>Weakness</label>
+        <textarea name="system.weakness"
+                  placeholder="What is the hero's weakness?"
+                  {{#unless editing}}disabled{{/unless}}>{{system.weakness}}</textarea>
+      </div>
+    </div>
 
-      <label>Proficient Weapons</label>
-      <textarea name="system.proficientWeapons"{{#unless editing}}disabled{{/unless}}>{{system.proficientWeapons}}</textarea>
+    <!--
+      WEAPONS
+      -------
 
-    </fieldset>
+      Mastered and Proficient weapons are free-text fields.
+      Same stacked layout as Personality.
+    -->
+    <div class="double-bordered weapons">
+      <h2 class="floating-header">Weapons</h2>
+
+      <div class="property property--stacked">
+        <label>Mastered Weapons</label>
+        <textarea name="system.masteredWeapons"
+                  placeholder="Weapons the hero has mastered"
+                  {{#unless editing}}disabled{{/unless}}>{{system.masteredWeapons}}</textarea>
+      </div>
+
+      <div class="property property--stacked">
+        <label>Proficient Weapons</label>
+        <textarea name="system.proficientWeapons"
+                  placeholder="Weapons the hero is proficient with"
+                  {{#unless editing}}disabled{{/unless}}>{{system.proficientWeapons}}</textarea>
+      </div>
+    </div>
 
   </section>
+
   <footer class="sheet-footer">
-    <button type="submit">
-        Save
-    </button>
+    <button type="submit">Save</button>
   </footer>
+
 </section>

@@ -26,10 +26,9 @@ The goal is to provide a clean, maintainable implementation compatible with curr
 
 ## Installation
 
-### Manifest URL
+Manifest URL: `https://raw.githubusercontent.com/triple-xl-paladin/foundry-tiny-supers/main/system.json`
 
-(Add your manifest URL here once published)
-
+The system should now show up in your foundry and can be used to create a new world.
 
 ### Manual Installation
 

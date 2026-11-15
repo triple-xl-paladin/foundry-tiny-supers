@@ -16,18 +16,39 @@
   You should have received a copy of the GNU General Public License
   along with the Tiny Supers system. If not, see <https://www.gnu.org/licenses/>.
 -->
-  <div class="tiny-supers dice-roller">
 
-    <button type="button" data-roll="normal">
-      Normal
-    </button>
+<!--
+  DICE ROLLER
+  -----------
 
-    <button type="button" data-roll="advantage">
-      Advantage
-    </button>
+  Three roll buttons: Normal, Advantage, Disadvantage.
 
-    <button type="button" data-roll="disadvantage">
-      Disadvantage
-    </button>
+  Layout follows the foundry-tinyd6 reference project:
+    - Centered flex row of dark buttons
+    - Each button has a Font Awesome dice icon + text label
+    - data-roll attribute carries the roll type to the JS
+-->
+<section class="die-roller-content">
 
-  </div>
+  <button type="button"
+          class="roll-dice"
+          data-roll="normal"
+          title="Normal (2d6)">
+    <span class="fas fa-dice"></span>
+  </button>
+
+  <button type="button"
+          class="roll-dice"
+          data-roll="advantage"
+          title="Advantage (3d6)">
+    <span class="fas fa-cubes"></span>
+  </button>
+
+  <button type="button"
+          class="roll-dice"
+          data-roll="disadvantage"
+          title="Disadvantage (1d6)">
+    <span class="fas fa-dice-d6"></span>
+  </button>
+
+</section>

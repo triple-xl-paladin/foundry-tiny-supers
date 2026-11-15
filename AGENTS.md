@@ -76,7 +76,7 @@ any of these problems when refactoring.
 - **Comments stay.** This repo doubles as a teaching reference. New code should carry the same explanatory comment density (section banners, "IMPORTANT" callouts, why-not explanations). Don't strip comments when editing.
 - **License headers** are required on every source file (GPL-3.0 block at top).
 - **No build step.** Plain `.mjs` ES modules, no bundler, no `package.json` (it's git-ignored). Don't add one.
-- **CSS scoping:** every rule must start with `.tiny-supers.*` — never style bare elements.
+- **CSS scoping:** every rule must start with `.tiny-supers.*` — never style bare elements. **Exception:** the dice-roller rules (`.die-roller-content`, `.roll-dice`) intentionally omit the `.tiny-supers` prefix because the dice-roller template is injected into Foundry's Chat Log (via `tiny-supers-chat-controls.mjs`), where there is no `.tiny-supers` ancestor. Those classes are unique to the template, so omitting the prefix is safe. The injected buttons also need `pointer-events: auto` because Foundry v14 sets `pointer-events: none` on the entire `#ui-right` sidebar.
 - **Git:** commit messages are hyphen-prefixed changelogs (`- Added ...`). Branch work happens on feature branches, merged to `main`.
 - **Debug `console.log`s** are tolerated during development but should be stripped before releases.
 

@@ -242,20 +242,22 @@ Hooks.once("renderChatLog", async () => {
   //
   // The selector:
   //
-  //     .tiny-supers.dice-roller
+  //     .die-roller-content
   //
   // means:
   //
-  //     "Find an element which has BOTH the 'tiny-supers' and 'dice-roller'
-  //      CSS classes."
+  //     "Find an element which has the 'die-roller-content' CSS class."
   //
-  // Those classes come from the dice-roller Handlebars template.
+  // That class comes from the root <section> of the dice-roller
+  // Handlebars template:
+  //
+  //     <section class="die-roller-content"> ... </section>
   //
   // Restricting the search to inputElement.parentElement is preferable to
   // searching the entire document because we know our controls were inserted
   // next to the chat input.
   const diceControls = inputElement.parentElement.querySelector(
-    ".tiny-supers.dice-roller"
+    ".die-roller-content"
   );
 
   // --------------------------------------------------------------------------

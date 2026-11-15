@@ -142,8 +142,8 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
     // This application is deliberately small because it only contains a few
     // buttons.
     position: {
-      width: 300,
-      height: 200
+      width: 160,
+      height: 90
     }
   };
 
