@@ -57,6 +57,70 @@ This project was developed with extensive assistance from AI tools, which were u
 
 The project is written using modern JavaScript modules (`.mjs`) and Foundry VTT's current API approach.
 
+## JSON Import Format
+
+The system's **Import JSON** menu (available under the Tiny Supers settings, GM-only) accepts a JSON file containing exactly **one** root collection. The root key selects what is imported:
+
+- `traits` — an array of Trait items
+- `archetypes` — an array of Archetype items
+- `actors` — an array of pregen Hero actors
+
+Imported documents are placed into world Compendiums (`Tiny Supers - Traits`, `Tiny Supers - Archetypes`, `Tiny Supers - Pregens`). Importing the same file again **updates** existing documents (matched by name + type) rather than creating duplicates.
+
+### Example: traits
+
+```json
+{
+  "traits": [
+    {
+      "trait": "Flight",
+      "trait_desc": "The hero can fly.",
+      "trait_group": "power"
+    }
+  ]
+}
+```
+
+### Example: archetypes
+
+```json
+{
+  "archetypes": [
+    {
+      "archetype": "The Avenger",
+      "archetype_desc": "A hero who fights for justice.",
+      "stress": 6,
+      "archetype_trait": "Brave",
+      "source": "Tiny Supers p.12"
+    }
+  ]
+}
+```
+
+### Example: actors (pregens)
+
+```json
+{
+  "actors": [
+    {
+      "name": "Captain Cosmos",
+      "civilianIdentity": "Joe Citizen",
+      "appearance": "Tall, blue suit.",
+      "beliefs": "Protect the innocent.",
+      "weakness": "Kryptonite.",
+      "archetype": "The Avenger",
+      "powerOrigin": "Alien",
+      "stress": 0,
+      "masteredWeapons": "Heat vision",
+      "proficientWeapons": "Flying fist",
+      "powerLevel": "Cosmic"
+    }
+  ]
+}
+```
+
+> **Note:** pregen actors do not include trait items in the import format. Traits are embedded Item documents on the character sheet; add them by dragging Trait items onto the sheet after importing.
+
 ## Contributing
 
 Contributions, bug reports, and suggestions are welcome.

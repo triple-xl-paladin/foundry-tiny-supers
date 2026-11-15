@@ -19,3 +19,6 @@ Thumbs.db
 
 # Other junk
 package.json
+
+# Local MCP configuration (per-developer tooling)
+opencode.jsonc

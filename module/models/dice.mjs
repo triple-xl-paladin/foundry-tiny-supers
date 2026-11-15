@@ -67,6 +67,29 @@
 //         If no Actor is supplied, the roll is made without associating it
 //         with a particular Actor.
 export async function rollTinySupers(type = "normal", actor = null) {
+  // -------------------------------------------------------------------------
+  // DETERMINE THE ACTOR FOR THE CHAT SPEAKER
+  // -------------------------------------------------------------------------
+  //
+  // The caller may not supply an Actor (for example, the standalone dice
+  // roller and the Chat Log dice buttons both call this function with only
+  // a roll type).
+  //
+  // In that case we fall back to the CURRENT USER's character, so that the
+  // roll still appears in Chat under the right player's name.
+  //
+  //     game.user
+  //         = the currently active Foundry user.
+  //
+  //     game.user.character
+  //         = the Actor document that user is currently playing, or null
+  //           if the user has no character selected.
+  //
+  // If there is no character either, actor stays null and the roll is made
+  // without an associated Actor (same as before this change).
+  if (!actor) {
+    actor = game.user?.character ?? null;
+  }
   // ---------------------------------------------------------------------------
   // DETERMINE THE DICE FORMULA
   // ---------------------------------------------------------------------------
@@ -187,6 +210,16 @@ export async function rollTinySupers(type = "normal", actor = null) {
   //
   // filter() doesn't change the original array. It creates a new array
   // containing only the elements that passed the test.
+  //
+  // NOTE:
+  //
+  // roll.dice[0] is the FIRST dice TERM in the formula. Our current formulas
+  // (1d6, 2d6, 3d6) each contain a single dice term, so this is correct.
+  //
+  // If a formula ever gains a second dice term (for example "2d6+1d6"),
+  // this expression would only count successes on the first term. At that
+  // point the success count should be computed across roll.dice (every
+  // term) rather than roll.dice[0] only.
   const successes = roll.dice[0].results
     .filter(die => die.result >= 5)
     .length;

@@ -450,9 +450,6 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
   // We use formData, because Foundry has already converted the submitted
   // form into a useful object for us.
   static async #onSubmit(event, form, formData) {
-    console.log("Submitting item archetype handler called");
-    console.log(form.object);
-
     // -------------------------------------------------------------------------
     // PREVENT DEFAULT BROWSER SUBMISSION
     // -------------------------------------------------------------------------
@@ -473,8 +470,6 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     //
     // event.preventDefault();
 
-    console.log(formData.object);
-
     // -------------------------------------------------------------------------
     // UPDATE THE UNDERLYING FOUNDRY ITEM
     // -------------------------------------------------------------------------
@@ -483,14 +478,28 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     //
     // The sheet itself is NOT the data.
     //
-    // "this.item" is the actual Foundry Item Document being edited.
+    // IMPORTANT JAVASCRIPT LESSON:
+    //
+    // This is a STATIC method, so:
+    //
+    //     this
+    //
+    // is NOT the sheet instance. We cannot write this.item here — that
+    // expression is undefined in static context.
+    //
+    // Instead we reach for the Document through the form we were passed:
+    //
+    //     form.object
+    //
+    // is the actual Foundry Item Document being edited. That is the
+    // reliable reference inside a static handler.
     //
     // "formData.object" contains the submitted values converted into an
     // object suitable for updating the Document.
     //
     // Therefore:
     //
-    //     this.item.update(formData.object)
+    //     form.object.update(formData.object)
     //
     // means:
     //
@@ -501,7 +510,7 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     //
     // Once the update completes, Foundry owns the new data and the Item
     // Document has been persisted.
-    await this.item.update(formData.object);
+    await form.object.update(formData.object);
 
     // -------------------------------------------------------------------------
     // WHY NOT form.object.update()?

@@ -352,8 +352,6 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
   //
   // this is where we could prepare that data for Handlebars.
   async _prepareContext() {
-    console.log("Dice roller context");
-
     // No data is currently required by dice-roller.hbs.
     return {};
   }
@@ -377,7 +375,6 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
     //
     // Because this method is asynchronous, we await it.
     await super._onFirstRender(context, options);
-    console.log(this.window);
 
     // -------------------------------------------------------------------------
     // REMOVE THE CLOSE BUTTON

@@ -20,6 +20,13 @@
   "styles": [
     "styles/tiny-supers.css"
   ],
+  "templates": [
+    "templates/actor-sheet.hbs",
+    "templates/dice-roller.hbs",
+    "templates/import.hbs",
+    "templates/item-archetype-sheet.hbs",
+    "templates/item-trait-sheet.hbs"
+  ],
   "initiative": "2d6",
   "documentTypes": {
    "Actor": {

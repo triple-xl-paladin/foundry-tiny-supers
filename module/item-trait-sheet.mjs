@@ -420,9 +420,6 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
   //
   // We only need formData for the actual update.
   static async #onSubmit(event, form, formData) {
-    console.log("Submitting item trait handler called");
-    console.log(form.object);
-
     // -------------------------------------------------------------------------
     // NORMAL BROWSER FORM SUBMISSION
     // -------------------------------------------------------------------------
@@ -441,18 +438,20 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // event.preventDefault();
 
-    console.log(formData.object);
-
     // -------------------------------------------------------------------------
     // UPDATE THE ACTUAL FOUNDRY ITEM
     // -------------------------------------------------------------------------
     //
     // THIS is where the submitted form becomes persistent Foundry data.
     //
-    // Remember the three important objects involved here:
+    // Remember the important objects involved here:
     //
-    //     this.item
+    //     form.object
     //         The actual Foundry Item Document.
+    //
+    //         NOTE: this is a STATIC method, so "this" is not the sheet
+    //         instance and this.item would be undefined. form.object is
+    //         the reliable way to reach the Document from here.
     //
     //     form
     //         The HTML <form> element.
@@ -463,7 +462,7 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // Therefore:
     //
-    //     this.item.update(formData.object)
+    //     form.object.update(formData.object)
     //
     // means:
     //
@@ -476,7 +475,7 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // Foundry then handles validation, document updates, hooks, persistence,
     // and notifying the rest of the application that the Item has changed.
-    await this.item.update(formData.object);
+    await form.object.update(formData.object);
 
     // -------------------------------------------------------------------------
     // AN EARLIER EXPERIMENT

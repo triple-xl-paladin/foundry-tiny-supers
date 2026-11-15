@@ -347,6 +347,153 @@ export class TinySupersImporter {
   //
   // The job of this method is to convert those plain JSON objects into the
   // data structure expected by Foundry's Item document system.
+  // ===========================================================================
+  // UP-SERT DOCUMENTS (UPDATE OR INSERT)
+  // ===========================================================================
+  //
+  // This is the single place where the importer decides, for every document
+  // we are about to import, whether to CREATE a new one or UPDATE an
+  // existing one.
+  //
+  // Without this, importing the same JSON file twice would create duplicate
+  // Documents in the Compendium.
+  //
+  // The rule is deliberately simple:
+  //
+  //     A document is considered "the same" if an existing document in the
+  //     destination Compendium has the same name AND the same type.
+  //
+  //     name + type
+  //         ↓
+  //     existing?  →  update it
+  //     no match?  →  create it
+  //
+  // This is a "upsert" (update or insert).
+  //
+  // The method is private (#) because it is an implementation detail of the
+  // importer. Nothing outside TinySupersImporter needs to know how the
+  // upsert is performed.
+  //
+  // Why not match on the whole system object?
+  //
+  //     Matching on name + type is enough for our use case and keeps the
+  //     logic easy to reason about. If two different Traits ever shared a
+  //     name, the first imported one would be updated rather than a second
+  //     one created. That is an acceptable trade-off for now; a stricter
+  //     match (for example on a unique source field) could replace this
+  //     later without changing the call sites.
+  static async #upsertDocuments(pack, documents) {
+
+    // -------------------------------------------------------------------------
+    // LOAD THE COMPENDIUM'S EXISTING DOCUMENTS
+    // -------------------------------------------------------------------------
+    //
+    // CompendiumCollection.content is the array of Documents already in the
+    // Compendium.
+    //
+    // We load it once, before the loop, so we don't re-read the Compendium
+    // for every document we import.
+    const existing = await pack.getDocuments();
+
+    // -------------------------------------------------------------------------
+    // WORK OUT WHICH DOCUMENTS TO CREATE AND WHICH TO UPDATE
+    // -------------------------------------------------------------------------
+    //
+    // We build two arrays:
+    //
+    //     toCreate
+    //         Documents with no existing match.
+    //
+    //     toUpdate
+    //         Pairs of [existing document, incoming data], so we can update
+    //         the existing document with the incoming values.
+    //
+    // Separating the work this way lets us batch the creations and updates
+    // with Foundry's own batched methods, which is more efficient than
+    // creating/updating one document at a time.
+    const toCreate = [];
+    const toUpdate = [];
+
+    for (const docData of documents) {
+
+      // Find an existing document with the same name AND type.
+      //
+      // find() returns the first match, or undefined if there is none.
+      const match = existing.find(
+        existingDoc =>
+          existingDoc.name === docData.name &&
+          existingDoc.type === docData.type
+      );
+
+      if (match) {
+        // We already have a document with this name and type.
+        //
+        // Update it with the incoming values rather than creating a
+        // duplicate.
+        toUpdate.push([match, docData]);
+      } else {
+        // No match. Create a new document.
+        toCreate.push(docData);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // CREATE THE NEW DOCUMENTS
+    // -------------------------------------------------------------------------
+    //
+    // createDocuments(...) is Foundry's batched creation method.
+    //
+    // Passing an empty array is harmless, so we can call this unconditionally.
+    //
+    // pack.collection is the collection identifier used by Foundry for
+    // this Compendium.
+    if (toCreate.length > 0) {
+      await pack.documentClass.createDocuments(toCreate, {
+        pack: pack.collection
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // UPDATE THE EXISTING DOCUMENTS
+    // -------------------------------------------------------------------------
+    //
+    // For each [existing, incomingData] pair we call the existing document's
+    // update() method with the incoming data.
+    //
+    // update() merges the incoming values into the existing document, so any
+    // fields not present in the incoming data are left untouched.
+    //
+    // We loop rather than batch here because each update targets a
+    // different document, and Foundry's Document.update() is the natural
+    // per-document API.
+    for (const [existingDoc, docData] of toUpdate) {
+      await existingDoc.update(docData);
+    }
+
+    // -------------------------------------------------------------------------
+    // TELL THE USER WHAT HAPPENED
+    // -------------------------------------------------------------------------
+    //
+    // A short summary is useful so the user knows whether the import created
+    // new documents, updated existing ones, or both.
+    //
+    // ui.notifications.info() is Foundry's standard notification system.
+    const createdCount = toCreate.length;
+    const updatedCount = toUpdate.length;
+
+    if (createdCount > 0 && updatedCount > 0) {
+      ui.notifications.info(
+        `Import complete: ${createdCount} created, ${updatedCount} updated.`
+      );
+    } else if (createdCount > 0) {
+      ui.notifications.info(`Import complete: ${createdCount} created.`);
+    } else if (updatedCount > 0) {
+      ui.notifications.info(`Import complete: ${updatedCount} updated.`);
+    } else {
+      ui.notifications.info("Import complete: nothing to do.");
+    }
+  }
+
   static async #importTraits(traits) {
 
     // Get the existing Compendium, or create it if necessary.
@@ -406,42 +553,17 @@ export class TinySupersImporter {
     }));
 
     // -------------------------------------------------------------------------
-    // CREATE ALL THE ITEMS IN THE COMPENDIUM
+    // UPSERT ALL THE ITEMS IN THE COMPENDIUM
     // -------------------------------------------------------------------------
     //
-    // This is an important Foundry concept.
+    // #upsertDocuments(...) decides, for each document, whether to CREATE a
+    // new one or UPDATE an existing one (matched by name + type).
     //
-    // "pack" is a CompendiumCollection.
+    // This means importing the same JSON file twice does not create
+    // duplicate Items — the second import updates the existing ones.
     //
-    // "pack.documentClass" tells us what kind of Documents that Compendium
-    // contains.
-    //
-    // Because this is an Item Compendium:
-    //
-    //     pack.documentClass
-    //
-    // is the Item document class.
-    //
-    // We can therefore call:
-    //
-    //     createDocuments(...)
-    //
-    // to create all the Items in one operation.
-    //
-    // This is preferable to repeatedly doing:
-    //
-    //     await Item.create(...)
-    //
-    // in a loop.
-    //
-    // The second argument tells Foundry which Compendium the documents
-    // belong to.
-    //
-    // pack.collection is the collection identifier used by Foundry for
-    // this Compendium.
-    await pack.documentClass.createDocuments(documents, {
-      pack: pack.collection
-    });
+    // The method also reports a short summary to the user.
+    await this.#upsertDocuments(pack, documents);
   }
 
   // ===========================================================================
@@ -557,13 +679,11 @@ export class TinySupersImporter {
       }
     }));
 
-    // Create all Archetype Items in the Compendium.
+    // Upsert all Archetype Items in the Compendium.
     //
-    // Again, documentClass comes from the Compendium and therefore represents
-    // the appropriate Document class for that Compendium.
-    await pack.documentClass.createDocuments(documents, {
-      pack: pack.collection
-    });
+    // Same upsert behaviour as traits: existing archetypes (matched by name
+    // + type) are updated, new ones are created.
+    await this.#upsertDocuments(pack, documents);
   }
 
   // ===========================================================================
@@ -641,12 +761,26 @@ export class TinySupersImporter {
       // IMPORTANT:
       // Make sure this value matches the actual Actor type registered in
       // system.json / CONFIG.Actor.dataModels.
-      type: "superhero",
+      type: "hero",
 
       // Custom Tiny Supers Actor data.
       //
       // These names need to match the fields defined by the SuperHero
       // TypeDataModel.
+      //
+      // NOTE:
+      // Traits are no longer fields on the Actor. They are separate Item
+      // documents embedded inside the Actor (see the character sheet).
+      //
+      // The old JSON import format used trait1, trait2 and trait3 fields
+      // here. Those fields were removed from the SuperHero data model when
+      // traits became Items, so they can no longer be imported as plain
+      // system data.
+      //
+      // If pregen import ever needs to support embedded trait Items, the
+      // JSON format would have to change (for example, to include an
+      // "items" array per actor) and the import logic would create those
+      // Items as embedded documents rather than system fields.
       system: {
         civilianIdentity: actor.civilianIdentity,
         appearance: actor.appearance,
@@ -655,31 +789,19 @@ export class TinySupersImporter {
         archetype: actor.archetype,
         powerOrigin: actor.powerOrigin,
         stress: actor.stress,
-        trait1: actor.trait1,
-        trait2: actor.trait2,
-        trait3: actor.trait3,
         masteredWeapons: actor.masteredWeapons,
         proficientWeapons: actor.proficientWeapons,
         powerLevel: actor.powerLevel,
       }
     }));
 
-    // Create all of the Actor Documents in the Compendium.
+    // Upsert all of the Actor Documents in the Compendium.
     //
-    // Because this Compendium was created with:
+    // Same upsert behaviour as traits and archetypes: existing pregen
+    // actors (matched by name + type) are updated, new ones are created.
     //
-    //     type: "Actor"
-    //
-    // pack.documentClass refers to the appropriate Actor document class.
-    //
-    // This is one of the nice things about using the Compendium's
-    // documentClass rather than hard-coding Actor.createDocuments():
-    //
-    //     pack.documentClass
-    //
-    // describes the type of document the Compendium expects.
-    await pack.documentClass.createDocuments(documents, {
-      pack: pack.collection
-    });
+    // This also means re-importing the same pregen JSON file does not create
+    // duplicate Actor documents in the Pregens Compendium.
+    await this.#upsertDocuments(pack, documents);
   }
 }

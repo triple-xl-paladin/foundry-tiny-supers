@@ -353,13 +353,14 @@ export class TinySupersImportApplication extends HandlebarsApplicationMixin(Appl
     //
     // If we didn't await it, the next line could execute immediately and
     // display "Import complete" before the importer had actually finished.
-    await TinySupersImporter.import(file);
-
-    // Tell the user that the asynchronous import has completed.
     //
-    // Foundry's ui.notifications API provides the standard notification
-    // system rather than us having to create our own message in the DOM.
-    ui.notifications.info("Import complete.");
+    // NOTE:
+    //
+    // TinySupersImporter.import() reports its own completion (how many
+    // documents were created vs updated) through ui.notifications. We
+    // therefore don't show a second "Import complete" message here — doing
+    // so would produce a duplicate notification.
+    await TinySupersImporter.import(file);
   }
 
 }

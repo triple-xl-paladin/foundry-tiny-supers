@@ -307,25 +307,6 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
     const context = await super._prepareContext(options);
 
     /*
-     * These console logs were useful while learning how Foundry's
-     * document collections work.
-     *
-     * They can eventually be removed once the sheet is stable.
-     *
-     * actor
-     *   = the actual Actor document
-     *
-     * actor.items
-     *   = the embedded Item collection belonging to that Actor
-     *
-     * actor.items.contents
-     *   = a normal JavaScript array containing the Items
-     */
-    console.log("SHEET ACTOR:", this.actor);
-    console.log("ACTOR ITEMS:", this.actor.items);
-    console.log("ACTOR ITEMS COLLECTION:", this.actor.items?.contents);
-
-    /*
      * Make the Actor and its system data explicitly available to the
      * Handlebars template.
      *
@@ -404,10 +385,6 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
      * archetype.
      */
     context.maxStress = context.archetype?.system.stress ?? 0;
-    
-    console.log("ACTOR:", this.actor);
-    console.log("ITEMS:", this.actor.items);
-    console.log("TRAITS:", context.traits);
 
     // Return the completed context to ApplicationV2.
     // The Handlebars template receives this object as its data.
@@ -426,20 +403,34 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
    * JavaScript object suitable for updating the Actor.
    */
   static async #onSubmit(event, form, formData) {
-    console.log("HANDLER CALLED");
-    console.log(form.object);
-    //event.preventDefault();
-    console.log(formData.object);
- 
     /*
      * Update the Actor with the submitted form data.
+     *
+     * IMPORTANT JAVASCRIPT LESSON:
+     *
+     * This is a STATIC method, so:
+     *
+     *     this
+     *
+     * is NOT the sheet instance. We cannot write this.actor here — that
+     * expression is undefined in static context.
+     *
+     * Instead we reach for the document through the form we were passed:
+     *
+     *     form.object
+     *
+     * is the Actor Document that this sheet represents. That is the
+     * reliable reference inside a static handler.
+     *
+     * (In an instance method, this.actor would be the same Document —
+     * the difference is purely about which kind of method we are in.)
      *
      * Notice that this only updates Actor fields.
      *
      * Embedded Items such as Traits and Archetypes are separate
      * documents and are created/deleted/updated independently.
      */
-    await this.actor.update(formData.object);
+    await form.object.update(formData.object);
   }
 
   /*
@@ -460,9 +451,6 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
    * This means we don't have to recreate Foundry's Item-drop behaviour.
    */
   async _onDropItem(event, item) {
-
-    console.log("DROPPED ITEM:", item.name, item.type);
-
 
     /*
      * ARCHETYPE

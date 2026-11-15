@@ -352,8 +352,6 @@ Hooks.once("renderChatLog", async () => {
       //     "The button whose event listener is handling this event."
       const type = event.currentTarget.dataset.roll;
 
-      console.log("Tiny Supers roll:", type);
-
       // ----------------------------------------------------------------------
       // PERFORM THE ACTUAL TINY SUPERS ROLL
       // ----------------------------------------------------------------------

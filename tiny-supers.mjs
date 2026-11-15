@@ -144,7 +144,7 @@ import { ItemTraitSheet } from './module/item-trait-sheet.mjs';
 // Standalone ApplicationV2 window used by the Import Content settings menu.
 //
 // This application lets an authorised user import JSON data into the world.
-import { TinySupersImportApplication } from './module/import-applicaiton.mjs';
+import { TinySupersImportApplication } from './module/import-application.mjs';
 
 // ============================================================================
 // FOUNDry DOCUMENT COLLECTIONS
