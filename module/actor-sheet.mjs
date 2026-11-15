@@ -223,9 +223,21 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
    * We re-render the sheet so that the template can update its controls.
    */
   static #toggleEdit(event, target) {
-    this._editing = !this._editing;
 
-    this.render();
+    // IMPORTANT: this is a STATIC method, so `this` is the class, not the
+    // sheet instance. We cannot use this._editing or this.render() here.
+    //
+    // Instead we walk up from the clicked element to the application
+    // element, then retrieve the live sheet instance from Foundry's
+    // application registry.
+    const appElement = target.closest(".application");
+    if (!appElement) return;
+
+    const app = foundry.applications.instances.get(appElement.id);
+    if (!app) return;
+
+    app._editing = !app._editing;
+    app.render();
   }
   /*
    * _getFrameButtons()
