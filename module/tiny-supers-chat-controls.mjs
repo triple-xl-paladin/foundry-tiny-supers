@@ -57,6 +57,26 @@
 //     User clicks button
 //             ↓
 //     rollTinySupers(type)
+//
+// IMPORTANT — DOM STABILITY:
+//
+// Foundry v14 moves the #chat-message element around in the DOM when the
+// sidebar opens/closes. In particular:
+//
+//     BEFORE (sidebar closed):
+//       #chat-message  →  #chat-notifications  →  #ui-right-column-1
+//
+//     AFTER (sidebar open):
+//       #chat-message  →  form.chat-form  →  #chat.tab  →  #sidebar
+//                          →  #sidebar-content  →  #ui-right
+//
+// The #chat-message element is RE-CREATED by Foundry at the new location.
+// Our dice roller must follow it.
+//
+// The renderChatLog hook does NOT fire when the sidebar opens — only when
+// the ChatLog application itself is rendered. So we use a MutationObserver
+// on #ui-right (the common ancestor of both locations) to detect when the
+// chat input's parent changes, and re-anchor the dice roller each time.
 
 
 // -----------------------------------------------------------------------------
@@ -82,131 +102,115 @@
 import { rollTinySupers } from "./models/dice.mjs";
 
 // ============================================================================
-// RENDER CHAT LOG HOOK
+// MODULE-LEVEL STATE
 // ============================================================================
 //
-// Foundry provides hooks for different stages of its UI lifecycle.
+// The rendered HTML string and the MutationObserver are stored at module
+// level so they persist across multiple renderChatLog fires.
 //
-// "renderChatLog" fires when the Chat Log application has been rendered.
+// _diceRollerHtml:
+//     The rendered dice-roller.hbs template. Rendered once on the first
+//     renderChatLog fire, then reused on subsequent fires.
 //
-// This is important because we need the Chat Log's HTML to EXIST before we
-// can insert our own HTML into it.
+//     We cache it because renderTemplate() is async and we don't want to
+//     re-render the template every time the sidebar opens/closes.
 //
-// In other words, this would not work reliably during "init":
+// _mutationObserver:
+//     The MutationObserver that watches for the #chat-message element
+//     moving in the DOM. Set up on the first renderChatLog fire.
+let _diceRollerHtml = null;
+let _mutationObserver = null;
+
+// ============================================================================
+// RENDER AND INSERT THE DICE ROLLER
+// ============================================================================
 //
-//     document.getElementById("chat-message")
+// This is the main function. It:
+//   1. Renders the dice-roller template (or uses the cached HTML).
+//   2. Finds the current #chat-message element.
+//   3. Removes any previously injected chat-log dice roller.
+//   4. Inserts the dice roller next to the chat input.
+//   5. Attaches click listeners to the buttons.
 //
-// because the Chat Log may not have been rendered yet.
-//
-// By waiting for renderChatLog, we know that Foundry has created the relevant
-// Chat Log DOM elements.
-//
-// Hooks.once() means this callback runs only once.
-//
-// IMPORTANT:
-//
-// This is fine if we only want to add the controls to the Chat Log when it is
-// first rendered.
-//
-// If Foundry destroys and recreates the Chat Log later in a way that causes
-// it to render again, we may need Hooks.on() instead.
-//
-// For this implementation, once was sufficient.
-Hooks.once("renderChatLog", async () => {
+// It is called:
+//   - From the renderChatLog hook (first fire).
+//   - From the MutationObserver callback (when the chat input moves).
+async function _injectDiceRoller() {
 
   // ==========================================================================
-  // RENDER THE HANDLEBARS TEMPLATE
+  // RENDER THE HANDLEBARS TEMPLATE (OR USE CACHED HTML)
   // ==========================================================================
   //
-  // Normally an ApplicationV2 class declares its template through PARTS:
+  // The template is rendered once and cached. Subsequent calls reuse the
+  // cached HTML, which is much faster than calling renderTemplate() again.
   //
-  //     static PARTS = {
-  //       main: {
-  //         template: "..."
-  //       }
-  //     };
-  //
-  // We aren't creating an ApplicationV2 here.
-  //
-  // Instead, we need to render the Handlebars template ourselves.
-  //
-  // Foundry provides:
-  //
-  //     foundry.applications.handlebars.renderTemplate()
-  //
-  // which takes:
-  //
-  //     1. The path to the Handlebars template.
-  //     2. A context object containing data for the template.
-  //
-  // Our dice roller currently doesn't require any dynamic data, so we pass:
-  //
-  //     {}
-  //
-  // The result is the rendered HTML as a string.
-  //
-  // Because renderTemplate() is asynchronous, we use await.
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/tiny-supers/templates/dice-roller.hbs",
-    {}
-  );
+  // renderTemplate() is async because it needs to load and parse the
+  // Handlebars template file.
+  if (!_diceRollerHtml) {
+    _diceRollerHtml = await foundry.applications.handlebars.renderTemplate(
+      "systems/tiny-supers/templates/dice-roller.hbs",
+      {}
+    );
+  }
 
   // ==========================================================================
-  // FIND THE FOUNDRY CHAT INPUT
+  // FIND THE CURRENT FOUNDRY CHAT INPUT
   // ==========================================================================
-  //
-  // We now need to find the existing Chat Log element that we want to insert
-  // our dice controls next to.
   //
   // "chat-message" is the ID of Foundry's chat message input.
   //
-  // document.getElementById() searches the entire browser document for that
-  // element.
+  // IMPORTANT:
   //
-  // IMPORTANT DOM LESSON:
-  //
-  // At this point we are no longer dealing with ApplicationV2's abstract
-  // rendering system. We are dealing directly with the browser DOM.
+  // The #chat-message element may not exist yet (e.g. during the very first
+  // renderChatLog fire before the sidebar has fully rendered). If it doesn't
+  // exist, we stop here — the MutationObserver will catch us later when the
+  // input appears.
   const inputElement = document.getElementById("chat-message");
-
-  // --------------------------------------------------------------------------
-  // SAFETY CHECK
-  // --------------------------------------------------------------------------
-  //
-  // Never assume the element exists.
-  //
-  // If Foundry changes its Chat Log HTML in a future version, or the Chat Log
-  // isn't available for some reason, getElementById() may return null.
-  //
-  // Rather than causing:
-  //
-  //     Cannot read properties of null
-  //
-  // we simply stop here.
-  //
-  // This is particularly important when modifying Foundry's own UI because
-  // its DOM structure isn't completely under our control.
   if (!inputElement) return;
 
   // ==========================================================================
-  // INSERT OUR RENDERED HTML
+  // REMOVE ANY PREVIOUSLY INJECTED DICE ROLLER
   // ==========================================================================
   //
-  // At this point:
+  // We may be re-running this function because the chat input moved. Any
+  // previously injected .die-roller-content is now orphaned in its old
+  // parent.
   //
-  //     content
-  //         = HTML generated from dice-roller.hbs
+  // We must remove it before inserting the new one, or we'll have two sets
+  // of buttons.
   //
-  //     inputElement
-  //         = Foundry's existing chat input
+  // IMPORTANT SCOPE LIMITATION:
   //
-  // We now insert our HTML into Foundry's DOM.
+  // The .die-roller-content class is used by TWO surfaces:
   //
-  // insertAdjacentHTML() is a browser DOM method.
+  //   1. The chat-log injection (this code) — parented into #chat-
+  //      notifications or wherever Foundry's chat input happens to be.
   //
-  // "afterend" means:
+  //   2. The standalone TinySupersDiceRoller ApplicationV2 window —
+  //      parented into a .window-content element.
   //
-  //     Insert the new HTML immediately AFTER inputElement.
+  // We must only remove the chat-log-injected ones. If we removed ALL
+  // .die-roller-content elements, we would destroy the standalone dice
+  // roller window's buttons.
+  //
+  // The standalone window's .die-roller-content is always inside a
+  // .window-content ancestor. The chat-log injection is never inside a
+  // .window-content. So we filter: remove only rollers that do NOT have
+  // a .window-content ancestor.
+  document.querySelectorAll(".die-roller-content").forEach(roller => {
+    // If this roller is inside a .window-content, it belongs to the
+    // standalone dice roller window — leave it alone.
+    if (roller.closest(".window-content")) return;
+    // Otherwise it's a chat-log injection from a previous render.
+    roller.remove();
+  });
+
+  // ==========================================================================
+  // INSERT THE DICE ROLLER NEXT TO THE CHAT INPUT
+  // ==========================================================================
+  //
+  // "afterend" inserts the HTML immediately AFTER inputElement, as a
+  // sibling.
   //
   // Conceptually:
   //
@@ -214,175 +218,164 @@ Hooks.once("renderChatLog", async () => {
   //
   //     [chat input]
   //
-  //
   //     AFTER:
   //
   //     [chat input]
   //     [Tiny Supers dice controls]
-  //
-  // IMPORTANT:
-  //
-  // We are NOT replacing the Chat Log's HTML.
-  //
-  // We are adding our own HTML alongside Foundry's existing HTML.
-  inputElement.insertAdjacentHTML("afterend", content);
+  inputElement.insertAdjacentHTML("afterend", _diceRollerHtml);
 
   // ==========================================================================
   // FIND THE HTML WE JUST INSERTED
   // ==========================================================================
   //
-  // We now need a reference to the dice controls so that we can attach
-  // event listeners to their buttons.
+  // We need a reference to the dice roller so we can attach event listeners
+  // to its buttons.
   //
-  // inputElement.parentElement
-  //     = the parent HTML element containing the chat input.
-  //
-  // querySelector()
-  //     = search that parent element for our dice roller.
-  //
-  // The selector:
-  //
-  //     .die-roller-content
-  //
-  // means:
-  //
-  //     "Find an element which has the 'die-roller-content' CSS class."
-  //
-  // That class comes from the root <section> of the dice-roller
-  // Handlebars template:
-  //
-  //     <section class="die-roller-content"> ... </section>
-  //
-  // Restricting the search to inputElement.parentElement is preferable to
-  // searching the entire document because we know our controls were inserted
-  // next to the chat input.
+  // We search within inputElement.parentElement because we know the dice
+  // roller was inserted as a sibling of the chat input.
   const diceControls = inputElement.parentElement.querySelector(
     ".die-roller-content"
   );
 
-  // --------------------------------------------------------------------------
-  // SECOND SAFETY CHECK
-  // --------------------------------------------------------------------------
-  //
-  // If the template didn't produce the expected element, stop rather than
-  // trying to call querySelectorAll() on null.
-  //
-  // Again, this makes the code more robust against future template or Foundry
-  // DOM changes.
+  // If the template didn't produce the expected element, stop.
   if (!diceControls) return;
 
   // ==========================================================================
-  // FIND ALL DICE BUTTONS
+  // ATTACH CLICK LISTENERS TO THE DICE BUTTONS
   // ==========================================================================
   //
   // Our Handlebars template gives the dice buttons a data-roll attribute.
   //
-  // For example:
-  //
-  //     <button data-roll="normal">Normal</button>
-  //
-  //     <button data-roll="advantage">Advantage</button>
-  //
-  //     <button data-roll="disadvantage">Disadvantage</button>
-  //
-  // Therefore:
-  //
-  //     [data-roll]
-  //
-  // selects every element containing that attribute.
-  //
-  // We deliberately search within diceControls rather than document so that
-  // we only attach listeners to OUR buttons.
+  // We search within diceControls so we only attach listeners to OUR
+  // buttons (not the standalone window's buttons).
   diceControls.querySelectorAll("[data-roll]").forEach(button => {
-
-    // ========================================================================
-    // ATTACH CLICK HANDLER
-    // ========================================================================
-    //
-    // Each button gets its own click event listener.
-    //
-    // This is normal browser DOM event handling rather than an ApplicationV2
-    // form handler.
-    //
-    // That's an important lesson from this implementation:
-    //
-    // ApplicationV2 does not mean you have to use ApplicationV2's form/event
-    // system for every piece of UI.
-    //
-    // When inserting small pieces of HTML into an existing Foundry interface,
-    // ordinary DOM event listeners are often simpler.
     button.addEventListener("click", event => {
-
-      // ----------------------------------------------------------------------
-      // PREVENT THE BUTTON'S DEFAULT BROWSER BEHAVIOUR
-      // ----------------------------------------------------------------------
-      //
-      // The buttons are inside HTML that may be associated with a form.
-      //
-      // Without preventing the default action, clicking the button could
-      // potentially cause the browser/form to perform its normal submission
-      // behaviour.
-      //
-      // We don't want that.
-      //
-      // We only want the button to trigger a Tiny Supers dice roll.
+      // Prevent the default form submission behaviour.
       event.preventDefault();
 
-      // ----------------------------------------------------------------------
-      // GET THE REQUESTED ROLL TYPE
-      // ----------------------------------------------------------------------
+      // Get the requested roll type from the data attribute.
       //
-      // HTML5 data attributes are exposed in JavaScript through "dataset".
-      //
-      // Given:
-      //
-      //     <button data-roll="advantage">
-      //
-      // JavaScript gives us:
-      //
-      //     event.currentTarget.dataset.roll
-      //
-      // which produces:
-      //
-      //     "advantage"
-      //
-      // currentTarget is used rather than target because the button might
-      // contain another element, such as an icon or span.
-      //
-      // currentTarget means:
-      //
-      //     "The button whose event listener is handling this event."
+      // currentTarget (not target) because the button might contain
+      // another element (an icon or span), and we want the button's
+      // dataset, not the icon's.
       const type = event.currentTarget.dataset.roll;
 
-      // ----------------------------------------------------------------------
-      // PERFORM THE ACTUAL TINY SUPERS ROLL
-      // ----------------------------------------------------------------------
-      //
-      // This is where the UI hands control over to the game rules.
-      //
-      // We don't calculate dice here.
-      //
-      // We don't create the Foundry Roll here.
-      //
-      // We don't count successes here.
-      //
-      // All of that belongs in models/dice.mjs.
-      //
-      // This UI simply says:
-      //
-      //     "The player requested this type of roll."
-      //
-      // and lets the dice model deal with it.
-      //
-      // Example:
-      //
-      //     type = "advantage"
-      //
-      // becomes:
-      //
-      //     rollTinySupers("advantage");
-      //
+      // Perform the actual Tiny Supers roll.
       rollTinySupers(type);
     });
   });
+}
+
+// ============================================================================
+// MUTATION OBSERVER
+// ============================================================================
+//
+// The MutationObserver watches for changes to the DOM that indicate the
+// #chat-message element has moved (i.e. its parent changed).
+//
+// When the sidebar opens/closes, Foundry re-creates the #chat-message
+// element at a new location. This triggers a "childList" mutation on the
+// old and new parents.
+//
+// We observe #ui-right because it is the common ancestor of both
+// locations:
+//
+//     #ui-right
+//       ├── #ui-right-column-1  (collapsed: #chat-message lives here)
+//       └── #sidebar            (expanded:  #chat-message lives here)
+//
+// The observer callback checks whether the #chat-message element's parent
+// has changed. If it has, we re-inject the dice roller next to the current
+// location.
+
+function _setupMutationObserver() {
+
+  // Find the #ui-right element. It's the common ancestor of both the
+  // collapsed and expanded chat input locations.
+  const uiRight = document.querySelector("#ui-right");
+  if (!uiRight) return;
+
+  // Track the last known parent of #chat-message. We compare against this
+  // to detect moves.
+  let lastChatInputParent = null;
+
+  // The observer callback. It fires whenever the DOM changes in a way
+  // that matches the options below.
+  const observerCallback = (mutations) => {
+    for (const mutation of mutations) {
+
+      // We only care about "childList" mutations (elements added or
+      // removed from a parent).
+      if (mutation.type !== "childList") continue;
+
+      // Find the current #chat-message element.
+      const chatInput = document.getElementById("chat-message");
+      if (!chatInput) continue;
+
+      // Get its current parent.
+      const currentParent = chatInput.parentElement;
+
+      // If the parent has changed (or this is the first time we're seeing
+      // the chat input), re-inject the dice roller.
+      if (currentParent !== lastChatInputParent) {
+        lastChatInputParent = currentParent;
+        // Re-inject asynchronously. We don't want to block the mutation
+        // callback — the DOM is in flux, and renderTemplate() is async
+        // anyway.
+        _injectDiceRoller();
+      }
+    }
+  };
+
+  // Create the observer.
+  //
+  // childList: true
+  //     Watch for children being added to or removed from #ui-right and
+  //     all its descendants (subtree: true).
+  //
+  // subtree: true
+  //     Recurse into all descendants. Without this, we'd only see
+  //     direct children of #ui-right, which isn't enough — the
+  //     #chat-message element is several levels deep.
+  const observer = new MutationObserver(observerCallback);
+  observer.observe(uiRight, {
+    childList: true,
+    subtree: true
+  });
+
+  // Store the observer so we don't create multiple observers if
+  // renderChatLog fires again.
+  _mutationObserver = observer;
+}
+
+// ============================================================================
+// RENDER CHAT LOG HOOK
+// ============================================================================
+//
+// Foundry provides hooks for different stages of its UI lifecycle.
+//
+// "renderChatLog" fires when the Chat Log application has been rendered.
+//
+// We use this hook to:
+//   1. Render the dice-roller template (first fire only, then cached).
+//   2. Set up the MutationObserver.
+//   3. Inject the dice roller next to the current chat input.
+//
+// IMPORTANT — Hooks.on(), NOT Hooks.once():
+//
+// The renderChatLog hook can fire multiple times. We use Hooks.on() so we
+// re-inject the dice roller each time it fires. The idempotent removal
+// inside _injectDiceRoller() ensures we never accumulate duplicates.
+Hooks.on("renderChatLog", async () => {
+
+  // Set up the MutationObserver (only once).
+  //
+  // If _mutationObserver is already set, we skip this — the observer is
+  // still watching the DOM.
+  if (!_mutationObserver) {
+    _setupMutationObserver();
+  }
+
+  // Inject the dice roller next to the current chat input.
+  await _injectDiceRoller();
 });

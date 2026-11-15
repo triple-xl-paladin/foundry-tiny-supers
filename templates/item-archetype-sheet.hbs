@@ -16,41 +16,73 @@
   You should have received a copy of the GNU General Public License
   along with the Tiny Supers system. If not, see <https://www.gnu.org/licenses/>.
 -->
+
+<!--
+  ARCHETYPE ITEM SHEET
+  --------------------
+
+  Layout follows the actor sheet:
+    - Double-bordered section with a floating title badge
+    - Property rows (label + input) with bottom-border dividers
+    - Transparent inputs that gain a border on hover/focus
+
+  IMPORTANT:
+  This template is wrapped in a <form> by ApplicationV2 / the
+  HandlebarsApplicationMixin, so <form> is NOT opened here.
+-->
 <section class="tiny-supers item-archetype-sheet">
 
   <header class="sheet-header">
-    <h1>
-      <input name="name"
-             type="text"
-             value="{{item.name}}"
-             placeholder="Archetype"/>
-    </h1>
+    <input name="name"
+           type="text"
+           value="{{item.name}}"
+           placeholder="Archetype Name"/>
   </header>
 
   <section class="sheet-body">
 
-    <fieldset>
-      <label>Description</label>
-      <input name="system.archetype_desc"
-             type="text"
-             value="{{system.archetype_desc}}"/>
+    <div class="double-bordered">
+      <h2 class="floating-header">Archetype</h2>
 
-      <label>Stress</label>
-      <input name="system.stress"
-             type="text"
-             value="{{system.stress}}"/>
+      <div class="property">
+        <label>Description</label>
+        <input name="system.archetype_desc"
+               type="text"
+               value="{{system.archetype_desc}}"
+               placeholder="Describe the archetype"/>
+      </div>
 
-      <label>Archetype Trait</label>
-      <input name="system.archetype_trait"
-             type="text"
-             value="{{system.archetype_trait}}"/>
+      <div class="property">
+        <label>Maximum Stress</label>
+        <input name="system.stress"
+               type="number"
+               min="0"
+               value="{{system.stress}}"
+               placeholder="Stress capacity"/>
+      </div>
 
-    </fieldset>
+      <div class="property">
+        <label>Archetype Trait</label>
+        <input name="system.archetype_trait"
+               type="text"
+               value="{{system.archetype_trait}}"
+               placeholder="e.g. Brave, Reckless"/>
+      </div>
+
+      <div class="property">
+        <label>Source</label>
+        <input name="system.source"
+               type="text"
+               value="{{system.source}}"
+               placeholder="Book and page reference"/>
+      </div>
+
+    </div>
 
   </section>
+
   <footer class="sheet-footer">
-    <button type="submit">
-        Save
-    </button>
+    <button type="submit">Save</button>
   </footer>
+
 </section>

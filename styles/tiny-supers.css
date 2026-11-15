@@ -547,6 +547,69 @@
 
 
 /* ============================================================
+   TINY SUPERS — ITEM SHEETS (Trait, Archetype)
+   ============================================================ */
+
+/*
+ * The item sheets (Trait, Archetype) share the same visual
+ * language as the actor sheet: parchment background, double-
+ * bordered sections, floating headers, property rows, and
+ * transparent inputs.
+ *
+ * The rules below cover the parts that are NOT already handled
+ * by the shared theme section at the top of this file.
+ */
+
+/*
+ * Item sheet roots get the same parchment treatment as the
+ * actor sheet.
+ */
+.tiny-supers.item-trait-sheet,
+.tiny-supers.item-archetype-sheet {
+  background-color: var(--ts-parchment);
+  color: var(--ts-ink);
+  font-family: var(--ts-font-body);
+}
+
+/*
+ * The window-content area scrolls so that long sheets don't
+ * overflow the window.
+ */
+.tiny-supers.item-trait-sheet .window-content,
+.tiny-supers.item-archetype-sheet .window-content {
+  overflow-y: auto !important;
+}
+
+/*
+ * The header holds the item name input.
+ *
+ * Unlike the actor sheet (which has a portrait + name), the
+ * item sheets have no portrait — just the name input taking
+ * the full header width.
+ */
+.tiny-supers.item-trait-sheet .sheet-header,
+.tiny-supers.item-archetype-sheet .sheet-header {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/*
+ * The item name input uses the heading font for a title-like
+ * appearance, matching the actor sheet's name input.
+ */
+.tiny-supers.item-trait-sheet .sheet-header input[name="name"],
+.tiny-supers.item-archetype-sheet .sheet-header input[name="name"] {
+  flex: 1;
+  font-family: var(--ts-font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+
+/* ============================================================
    TINY SUPERS — DICE ROLLER
    ============================================================ */
 

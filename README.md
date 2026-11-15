@@ -28,7 +28,7 @@ The goal is to provide a clean, maintainable implementation compatible with curr
 
 Manifest URL: `https://raw.githubusercontent.com/triple-xl-paladin/foundry-tiny-supers/main/system.json`
 
-The system should now show up in your foundry and can be used to create a new world.
+The system should now show up in your Foundry VTT and can be used to create a new world.
 
 ### Manual Installation
 

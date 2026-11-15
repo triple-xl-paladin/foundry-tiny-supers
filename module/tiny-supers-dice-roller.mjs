@@ -134,16 +134,24 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
     },
 
     // -------------------------------------------------------------------------
-    // INITIAL WINDOW SIZE
+    // INITIAL WINDOW SIZE AND POSITION
     // -------------------------------------------------------------------------
     //
-    // The initial dimensions of the dice roller window.
+    // The initial dimensions and screen position of the dice roller window.
     //
     // This application is deliberately small because it only contains a few
     // buttons.
+    //
+    // The top/left values place the window in a convenient spot near the
+    // bottom of the screen, close to the chat log. The exact pixel values
+    // are relative to the top-left of the Foundry interface, and were
+    // chosen to match a common layout where the chat log sits on the
+    // right-hand side.
     position: {
       width: 160,
-      height: 90
+      height: 90,
+      top: 848,
+      left: 837
     }
   };
 

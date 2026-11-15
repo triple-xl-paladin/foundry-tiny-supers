@@ -16,36 +16,56 @@
   You should have received a copy of the GNU General Public License
   along with the Tiny Supers system. If not, see <https://www.gnu.org/licenses/>.
 -->
+
+<!--
+  TRAIT ITEM SHEET
+  ----------------
+
+  Layout follows the actor sheet:
+    - Double-bordered section with a floating title badge
+    - Property rows (label + input) with bottom-border dividers
+    - Transparent inputs that gain a border on hover/focus
+
+  IMPORTANT:
+  This template is wrapped in a <form> by ApplicationV2 / the
+  HandlebarsApplicationMixin, so <form> is NOT opened here.
+-->
 <section class="tiny-supers item-trait-sheet">
 
   <header class="sheet-header">
-    <h1>
-      <input name="name"
-             type="text"
-             value="{{item.name}}"
-             placeholder="trait"/>
-    </h1>
+    <input name="name"
+           type="text"
+           value="{{item.name}}"
+           placeholder="Trait Name"/>
   </header>
 
   <section class="sheet-body">
 
-    <fieldset>
-      <label>Description</label>
-      <input name="system.trait_desc"
-             type="text"
-             value="{{system.trait_desc}}"/>
+    <div class="double-bordered">
+      <h2 class="floating-header">Trait</h2>
 
-      <label>trait Trait</label>
-      <input name="system.trait_group"
-             type="text"
-             value="{{system.trait_group}}"/>
+      <div class="property">
+        <label>Description</label>
+        <input name="system.trait_desc"
+               type="text"
+               value="{{system.trait_desc}}"
+               placeholder="What does this trait do?"/>
+      </div>
 
-    </fieldset>
+      <div class="property">
+        <label>Trait Group</label>
+        <input name="system.trait_group"
+               type="text"
+               value="{{system.trait_group}}"
+               placeholder="power, origin, other"/>
+      </div>
+
+    </div>
 
   </section>
+
   <footer class="sheet-footer">
-    <button type="submit">
-        Save
-    </button>
+    <button type="submit">Save</button>
   </footer>
+
 </section>
