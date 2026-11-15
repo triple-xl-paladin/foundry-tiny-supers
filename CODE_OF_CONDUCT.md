@@ -29,8 +29,7 @@ Examples of unacceptable behavior by participants include:
 Project maintainers are responsible for clarifying standards of acceptable behavior and are expected to take appropriate and fair corrective action in response to any behavior that violates this Code of Conduct.
 
 ## Reporting Guidelines
-
-If you are subject to or witness unacceptable behavior, please report it by contacting the project maintainers at dumpcore1-triple-xl-paladin@yahoo.com. All complaints will be reviewed and investigated promptly and fairly.
+To report violations of this Code of Conduct, please submit a report via the repository's Security tab → Report a vulnerability (this channel is private and visible only to maintainers). Please note in the report description that "this is a Code of Conduct issue, not a security vulnerability," so that I can route it correctly.
 
 ## Enforcement
 
