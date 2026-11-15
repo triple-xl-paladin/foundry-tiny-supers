@@ -47,7 +47,11 @@ styles/tiny-supers.css             System CSS, scoped under .tiny-supers.*
 - Collections are `foundry.documents.collections.Actors` / `.Items` / `.CompendiumCollection` — not the old globals.
 - ApplicationV2: `HandlebarsApplicationMixin(App)` + `static DEFAULT_OPTIONS` + `static PARTS` + `async _prepareContext()`.
 - Sheet registration: `Actors.registerSheet("tiny-supers", Sheet, { types: ["hero"], makeDefault: true })`. Unregister the core sheet first for Actor.
-- Form handlers are **static** methods: `static async #onSubmit(event, form, formData)`. Inside a static handler, `this` is **not** the application instance — use `form.object` (the document) for updates. The `HandlebarsApplicationMixin` form machinery already applies `formData.object` to the document, so a manual `update` in the handler is usually redundant.
+- Form handlers are **static** methods: `static async #onSubmit(event, form, formData)`. Inside a static handler, `this` is **not** the application instance. `form` is the HTML `<form>` element, NOT the application. `formData` is a `FormDataExtended` whose `.object` is **flat** (dot-notation keys like `"system.stress": 0`), so pass it through `foundry.utils.expandObject()` before calling `update()`. Reach the Document via `event.currentTarget.closest(".application")` → `foundry.applications.instances.get(id)` → `app.actor` (ActorSheetV2) or `app.item` (ItemSheetV2).
+- **ApplicationV2 instances** live in `foundry.applications.instances` (a `Map` keyed by element ID). Use this to reach a live sheet from anywhere.
+- **`setPosition()`** takes a single position **object**: `this.setPosition({ left, top })`, not separate parameters.
+- **Dice-roller window position** is percentage-of-viewport (43.6% left, 82.3% top), set in `_onFirstRender` via `setTimeout` (50 ms) to defer past Foundry's layout pass. Guarded by `this._positioned` so it only fires once.
+- **Chat-log dice buttons** are injected via `renderChatLog` hook + a `MutationObserver` on `#ui-right` to re-anchor when Foundry moves `#chat-message` (sidebar open/close does not fire `renderChatLog`).
 - `renderChatLog` hook for Chat Log DOM injection; `Hooks.once` is fine for one-shot UI work.
 - `roll.dice[0].results` is per-dice-term; current formulas (1d6/2d6/3d6) have one term, but don't assume it.
 
