@@ -467,7 +467,7 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
     //     sheet.object  →  the Actor Document
     const appElement = event.currentTarget.closest(".application");
     const app = foundry.applications.instances.get(appElement.id);
-    await app.object.update(updateData);
+    await app.actor.update(updateData);
   }
 
   /*

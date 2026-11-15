@@ -519,7 +519,7 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     // Reach the Item Document through the application registry.
     const appElement = event.currentTarget.closest(".application");
     const app = foundry.applications.instances.get(appElement.id);
-    await app.object.update(updateData);
+    await app.item.update(updateData);
 
     // -------------------------------------------------------------------------
     // WHY NOT form.object.update()?
