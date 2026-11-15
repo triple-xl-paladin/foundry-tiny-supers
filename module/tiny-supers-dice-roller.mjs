@@ -137,21 +137,27 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
     // INITIAL WINDOW SIZE AND POSITION
     // -------------------------------------------------------------------------
     //
-    // The initial dimensions and screen position of the dice roller window.
+    // The initial dimensions of the dice roller window.
     //
     // This application is deliberately small because it only contains a few
     // buttons.
     //
-    // The top/left values place the window in a convenient spot near the
-    // bottom of the screen, close to the chat log. The exact pixel values
-    // are relative to the top-left of the Foundry interface, and were
-    // chosen to match a common layout where the chat log sits on the
-    // right-hand side.
+    // IMPORTANT — top/left are intentionally absent:
+    //
+    // We want the window to load at a *proportionally* consistent spot on
+    // any screen resolution, rather than at fixed pixel coordinates.
+    //
+    // A fixed pixel position (e.g. top: 848, left: 837) works on one
+    // monitor but breaks on others: on a smaller window the dice roller
+    // could load off-screen, and on a larger window it would sit in an
+    // arbitrary corner.
+    //
+    // Instead, the initial position is calculated in _onRender() from the
+    // current window.innerWidth / window.innerHeight and then clamped so
+    // the window always stays fully visible.
     position: {
       width: 160,
-      height: 90,
-      top: 848,
-      left: 837
+      height: 90
     }
   };
 
@@ -218,7 +224,66 @@ export class TinySupersDiceRoller extends HandlebarsApplicationMixin(Application
     //
     // This is important when overriding lifecycle methods. The parent may
     // perform work that ApplicationV2 itself requires.
-    super._onRender(context, options);
+    await super._onRender(context, options);
+
+    // -------------------------------------------------------------------------
+    // POSITION THE WINDOW (FIRST RENDER ONLY)
+    // -------------------------------------------------------------------------
+    //
+    // We want the dice roller to appear at a proportionally consistent spot
+    // on any screen resolution, rather than at fixed pixel coordinates.
+    //
+    // Foundry's render cycle applies the default position (centered on
+    // screen) as part of its internal processing, so we must reposition
+    // AFTER the parent render is complete.
+    //
+    // We only reposition on the first render. If the user drags the window
+    // elsewhere and Foundry later re-renders it, we don't want to snap it
+    // back to the original spot.
+    if (!this._positioned) {
+      this._positioned = true;
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const winWidth = this.position?.width ?? 160;
+      const winHeight = this.position?.height ?? 90;
+
+      // Target position as a proportion of the viewport.
+      //
+      // These ratios were derived from the user's preferred spot on a
+      // 1920×1031 viewport (top: 848, left: 837). They place the window
+      // in the lower-left quadrant, close to the chat log.
+      const targetLeft = Math.round(viewportWidth * 0.436);
+      const targetTop  = Math.round(viewportHeight * 0.823);
+
+      // Clamp so the window never extends past the viewport edges.
+      //
+      // A minimum margin of 8 px keeps the window from hugging the
+      // screen edge, which would make the title bar hard to grab.
+      const margin = 8;
+      const clampedLeft = Math.max(margin, Math.min(targetLeft, viewportWidth  - winWidth  - margin));
+      const clampedTop  = Math.max(margin, Math.min(targetTop,  viewportHeight - winHeight - margin));
+
+      // Use requestAnimationFrame to defer the reposition until after
+      // Foundry's own layout pass completes. Foundry's render cycle
+      // applies the default centered position as part of its internal
+      // processing; if we setPosition() synchronously here, Foundry
+      // overwrites it immediately after _onRender() returns.
+      //
+      // A single rAF frame is enough to land after Foundry's layout but
+      // before the user perceives any movement.
+      requestAnimationFrame(() => {
+        // Try the proper ApplicationV2 API first.
+        this.setPosition(clampedLeft, clampedTop);
+
+        // Belt-and-braces: if Foundry's internal state still holds the old
+        // centered coordinates, force the CSS directly. This ensures the
+        // window is visible in the right spot even if setPosition() was
+        // overridden by a later render pass.
+        this.element.style.left = clampedLeft + "px";
+        this.element.style.top  = clampedTop  + "px";
+      });
+    }
 
     // -------------------------------------------------------------------------
     // FIND ALL DICE ROLL BUTTONS
