@@ -457,7 +457,17 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
      * the DataModel understands.
      */
     const updateData = foundry.utils.expandObject(formData.object);
-    await form.object.update(updateData);
+
+    // The `form` parameter is the HTML <form> element, NOT the application.
+    // We reach the Actor Document through the application registry:
+    //
+    //     event.currentTarget  →  the <form> DOM element
+    //     closest(".application")  →  the <section class="application">
+    //     foundry.applications.instances.get(id)  →  the live sheet
+    //     sheet.object  →  the Actor Document
+    const appElement = event.currentTarget.closest(".application");
+    const app = foundry.applications.instances.get(appElement.id);
+    await app.object.update(updateData);
   }
 
   /*

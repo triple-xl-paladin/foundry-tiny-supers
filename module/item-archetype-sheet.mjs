@@ -514,7 +514,12 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     // IMPORTANT — formData.object is FLAT (dot-notation keys), so we
     // expand it into a nested object before passing to update().
     const updateData = foundry.utils.expandObject(formData.object);
-    await form.object.update(updateData);
+
+    // `form` is the HTML <form> element, not the application.
+    // Reach the Item Document through the application registry.
+    const appElement = event.currentTarget.closest(".application");
+    const app = foundry.applications.instances.get(appElement.id);
+    await app.object.update(updateData);
 
     // -------------------------------------------------------------------------
     // WHY NOT form.object.update()?
