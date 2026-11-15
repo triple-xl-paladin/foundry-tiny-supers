@@ -510,7 +510,11 @@ export class ItemArchetypeSheet extends api.HandlebarsApplicationMixin(sheets.It
     //
     // Once the update completes, Foundry owns the new data and the Item
     // Document has been persisted.
-    await form.object.update(formData.object);
+    //
+    // IMPORTANT — formData.object is FLAT (dot-notation keys), so we
+    // expand it into a nested object before passing to update().
+    const updateData = foundry.utils.expandObject(formData.object);
+    await form.object.update(updateData);
 
     // -------------------------------------------------------------------------
     // WHY NOT form.object.update()?

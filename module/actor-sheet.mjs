@@ -441,8 +441,23 @@ export class SuperHeroSheet extends api.HandlebarsApplicationMixin(sheets.ActorS
      *
      * Embedded Items such as Traits and Archetypes are separate
      * documents and are created/deleted/updated independently.
+     *
+     * IMPORTANT — formData.object is FLAT:
+     *
+     * Foundry v14's FormDataExtended produces an object with
+     * dot-notation keys:
+     *
+     *     { "system.civilianIdentity": "Batman", "system.stress": 0 }
+     *
+     * Document.update() expects a NESTED object:
+     *
+     *     { system: { civilianIdentity: "Batman", stress: 0 } }
+     *
+     * expandObject() converts the flat form into the nested shape that
+     * the DataModel understands.
      */
-    await form.object.update(formData.object);
+    const updateData = foundry.utils.expandObject(formData.object);
+    await form.object.update(updateData);
   }
 
   /*

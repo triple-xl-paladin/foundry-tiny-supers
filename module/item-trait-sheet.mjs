@@ -475,7 +475,11 @@ export class ItemTraitSheet extends api.HandlebarsApplicationMixin(sheets.ItemSh
     //
     // Foundry then handles validation, document updates, hooks, persistence,
     // and notifying the rest of the application that the Item has changed.
-    await form.object.update(formData.object);
+    //
+    // IMPORTANT — formData.object is FLAT (dot-notation keys), so we
+    // expand it into a nested object before passing to update().
+    const updateData = foundry.utils.expandObject(formData.object);
+    await form.object.update(updateData);
 
     // -------------------------------------------------------------------------
     // AN EARLIER EXPERIMENT
