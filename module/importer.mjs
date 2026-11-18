@@ -688,7 +688,8 @@ export class TinySupersImporter {
   //
   // 2. We were relying on the older global Item API rather than using the
   //    Compendium's documentClass.
-  #    The modern approach is:
+  //
+  //    The modern approach is:
   //
   //        const doc = await pack.documentClass.create(data);
   //        await pack.importDocument(doc);
