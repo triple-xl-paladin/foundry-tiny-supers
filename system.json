@@ -35,7 +35,7 @@
     "Item": {
         "archetype":{},
         "trait":{}
-    },
+    }
   },
   "manifest": "https://github.com/triple-xl-paladin/foundry-tiny-supers/releases/latest/download/system.json",
   "download": "https://github.com/triple-xl-paladin/foundry-tiny-supers/releases/download/1.0.0/tiny-supers.zip"
