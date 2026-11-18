@@ -146,6 +146,16 @@ import { ItemTraitSheet } from './module/item-trait-sheet.mjs';
 // This application lets an authorised user import JSON data into the world.
 import { TinySupersImportApplication } from './module/import-application.mjs';
 
+// -----------------------------------------------------------------------------
+// IMPORTER
+// -----------------------------------------------------------------------------
+//
+// The actual import logic, separated from the import Application.
+//
+// Exposed on game.tinySupers so it can be called programmatically
+// (for example, from the GM console or automated tests).
+import { TinySupersImporter } from './module/importer.mjs';
+
 // ============================================================================
 // FOUNDry DOCUMENT COLLECTIONS
 // ============================================================================
@@ -530,6 +540,17 @@ Hooks.once("ready", () => {
   //
   // rather than having to create a second dice roller.
   game.tinySupers.dice = new TinySupersDiceRoller();
+
+  // ==========================================================================
+  // EXPOSE THE IMPORTER
+  // ==========================================================================
+  //
+  // Storing the importer on the system namespace lets it be called
+  // programmatically without going through the import Application UI.
+  //
+  // This is useful for the GM console, automated tests, and future
+  // features that might import data without user interaction.
+  game.tinySupers.importer = TinySupersImporter;
 
   // ==========================================================================
   // DISPLAY THE DICE ROLLER

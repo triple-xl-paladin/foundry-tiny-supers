@@ -408,9 +408,8 @@ export class TinySupersImporter {
     //         Pairs of [existing document, incoming data], so we can update
     //         the existing document with the incoming values.
     //
-    // Separating the work this way lets us batch the creations and updates
-    // with Foundry's own batched methods, which is more efficient than
-    // creating/updating one document at a time.
+    // Separating the work this way lets us distinguish between new documents
+    // (which we create) and existing ones (which we update).
     const toCreate = [];
     const toUpdate = [];
 
@@ -441,16 +440,100 @@ export class TinySupersImporter {
     // CREATE THE NEW DOCUMENTS
     // -------------------------------------------------------------------------
     //
-    // createDocuments(...) is Foundry's batched creation method.
+    // For each document we create it in the world, import it into the
+    // Compendium, then delete the world copy.
     //
-    // Passing an empty array is harmless, so we can call this unconditionally.
+    // WHY THIS THREE-STEP PATTERN?
     //
-    // pack.collection is the collection identifier used by Foundry for
-    // this Compendium.
+    // In Foundry 14.370, CompendiumCollection does NOT have a direct
+    // createDocument(data) method that persists raw document data into the
+    // pack. The two options that exist are:
+    //
+    //   1. pack.documentClass.createDocuments(data, { pack })
+    //      — silently returns [] when validation fails. No error, no
+    //        warning. The import "does nothing".
+    //
+    //   2. pack.importDocument(document)
+    //      — accepts a Document instance and moves it into the Compendium.
+    //        This works, but you need a Document to hand it.
+    //
+    // So the reliable pattern is:
+    //
+    //   a. Create the Document in the world (Item.create / Actor.create).
+    //      This surfaces real validation errors and gives us a Document
+    //      instance.
+    //
+    //   b. Import that Document into the Compendium via
+    //      pack.importDocument(doc).
+    //
+    //   c. Delete the world copy. The Document now lives in the Compendium.
+    //
+    // Each step is wrapped in a try/catch so that a single bad document
+    // doesn't abort the entire import — the user gets a notification naming
+    // the failing document and the import continues with the rest.
+    //
+    // If the import succeeds but the world-delete fails, we still count it
+    // as a success (the document is in the Compendium, which is what
+    // matters). A stray world document is far less harmful than a missing
+    // Compendium document.
+    let createdCount = 0;
+    let failedCount = 0;
+
     if (toCreate.length > 0) {
-      await pack.documentClass.createDocuments(toCreate, {
-        pack: pack.collection
-      });
+      for (const docData of toCreate) {
+        let worldDoc = null;
+        try {
+          // Step 1: Create the Document in the world.
+          //
+          // The pack's documentClass tells us whether we're creating
+          // Items or Actors, so we call the right create method.
+          const docClass = pack.documentClass;
+          worldDoc = await docClass.create(docData);
+        } catch (err) {
+          // The world-creation itself failed (e.g. invalid type, bad
+          // schema). Surface the real error.
+          failedCount++;
+          ui.notifications.error(
+            `Failed to import "${docData.name}": ${err.message}`
+          );
+          continue;
+        }
+
+        try {
+          // Step 2: Import the world Document into the Compendium.
+          await pack.importDocument(worldDoc);
+
+          // Step 3: Delete the world copy.
+          //
+          // We try this in a separate try/catch because a failure here
+          // doesn't mean the import failed — the document is already in
+          // the Compendium. We just log a warning so the GM can clean
+          // up manually if needed.
+          try {
+            await worldDoc.delete();
+          } catch (delErr) {
+            console.warn(
+              `tiny-supers: Could not delete world copy of "${worldDoc.name}" after import:`,
+              delErr
+            );
+          }
+
+          createdCount++;
+        } catch (err) {
+          // The import into the Compendium failed. Clean up the world
+          // document so we don't leave strays behind.
+          failedCount++;
+          ui.notifications.error(
+            `Failed to import "${docData.name}": ${err.message}`
+          );
+          try {
+            await worldDoc.delete();
+          } catch {
+            // Best-effort cleanup. If this also fails, the GM can
+            // delete the stray document manually.
+          }
+        }
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -466,8 +549,17 @@ export class TinySupersImporter {
     // We loop rather than batch here because each update targets a
     // different document, and Foundry's Document.update() is the natural
     // per-document API.
+    let updatedCount = 0;
     for (const [existingDoc, docData] of toUpdate) {
-      await existingDoc.update(docData);
+      try {
+        await existingDoc.update(docData);
+        updatedCount++;
+      } catch (err) {
+        failedCount++;
+        ui.notifications.error(
+          `Failed to update "${existingDoc.name}": ${err.message}`
+        );
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -478,17 +570,19 @@ export class TinySupersImporter {
     // new documents, updated existing ones, or both.
     //
     // ui.notifications.info() is Foundry's standard notification system.
-    const createdCount = toCreate.length;
-    const updatedCount = toUpdate.length;
+    //
+    // createdCount and updatedCount reflect documents that SUCCEEDED, not
+    // just the ones we attempted.  failedCount tracks errors so the user
+    // knows when something went wrong.
 
-    if (createdCount > 0 && updatedCount > 0) {
-      ui.notifications.info(
-        `Import complete: ${createdCount} created, ${updatedCount} updated.`
-      );
-    } else if (createdCount > 0) {
-      ui.notifications.info(`Import complete: ${createdCount} created.`);
-    } else if (updatedCount > 0) {
-      ui.notifications.info(`Import complete: ${updatedCount} updated.`);
+    // Build the summary message.
+    const parts = [];
+    if (createdCount > 0) parts.push(`${createdCount} created`);
+    if (updatedCount > 0) parts.push(`${updatedCount} updated`);
+    if (failedCount > 0) parts.push(`${failedCount} failed`);
+
+    if (parts.length > 0) {
+      ui.notifications.info(`Import complete: ${parts.join(", ")}.`);
     } else {
       ui.notifications.info("Import complete: nothing to do.");
     }
@@ -594,12 +688,17 @@ export class TinySupersImporter {
   //
   // 2. We were relying on the older global Item API rather than using the
   //    Compendium's documentClass.
+  #    The modern approach is:
   //
-  //    The modern approach is:
+  //        const doc = await pack.documentClass.create(data);
+  //        await pack.importDocument(doc);
+  //        await doc.delete();
   //
-  //        pack.documentClass.createDocuments(...)
-  //
-  //    This lets the Compendium tell us what kind of Documents it contains.
+  //    This three-step pattern (create in world → import into Compendium →
+  //    delete world copy) is the only reliable way to persist documents
+  //    into a world Compendium in Foundry 14.370. The batched
+  //    createDocuments(...) silently returns [] on validation failure, and
+  //    CompendiumCollection has no direct createDocument(data) method.
   //
   // This commented code is therefore useful as a record of what DIDN'T work
   // and, more importantly, why.
